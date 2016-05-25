@@ -1,11 +1,13 @@
 package com.watterizer.panels;
 
+import com.watterizer.panels.login.LoginJFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.sql.Connection;
+import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
 public class SplashScreen extends javax.swing.JFrame {
@@ -20,63 +22,18 @@ public class SplashScreen extends javax.swing.JFrame {
             setUndecorated(true);
             initComponents();
             getContentPane().setVisible(false);
+            
         }
 
         fadeInSplash(2000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                infoDisplayer.setText("cabô");
-
                 // Checar arquivo de configurações para identificar servidor local ou remoto.
                 // Caso seja remoto:
                 new Thread() {
                     @Override
                     public void run() {
-                        try {
-                            checkInternetConn();
-                        } catch (Exception ex) {
-
-                            switch (ex.getMessage()) {
-                                case "Internet":
-                                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
-
-                                    internet.setRightButtonAction(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            internet.disposeWindow();
-                                        }
-                                    });
-
-                                    internet.setRetryButtonAction(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            
-                                        }
-                                    });
-                                    
-                                    internet.setVisible(true);
-                                    break;
-                                case "DB":
-                                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
-
-                                    db.setRightButtonAction(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            db.disposeWindow();
-                                        }
-                                    });
-
-                                    db.setRetryButtonAction(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            
-                                        }
-                                    });
-                                    
-                                    db.setVisible(true);
-                                    break;
-                            }
-                        }
+                        executeTests();
                     }
                 }.start();
             }
@@ -101,7 +58,6 @@ public class SplashScreen extends javax.swing.JFrame {
         infoDisplayer.setBackground(new java.awt.Color(204, 0, 51));
         infoDisplayer.setOpaque(true);
 
-        jProgressBar1.setValue(70);
         jProgressBar1.setBorder(new RoundedCornerBorder(35, 35));
         jProgressBar1.setOpaque(true);
 
@@ -173,6 +129,78 @@ public class SplashScreen extends javax.swing.JFrame {
         t.start();
     }
 
+    private void executeTests() {
+        jProgressBar1.setMinimum(0);
+        jProgressBar1.setMaximum(60);
+        jProgressBar1.setValue(0);
+
+        try {
+            checkInternetConn();
+
+            fadeOutSplash(1000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    new LoginJFrame().setVisible(true);
+                    dispose();
+                }
+            });
+
+        } catch (Exception ex) {
+            switch (ex.getMessage()) {
+                case "Internet":
+                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
+
+                    internet.setRightButtonAction(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            internet.disposeWindow();
+                        }
+                    });
+
+                    internet.setRetryButtonAction(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    executeTests();
+                                }
+                            }.start();
+                            internet.disposeWindow();
+                        }
+                    });
+
+                    internet.setVisible(true);
+                    break;
+                case "DB":
+                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
+
+                    db.setRightButtonAction(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            db.disposeWindow();
+                        }
+                    });
+
+                    db.setRetryButtonAction(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    executeTests();
+                                }
+                            }.start();
+                            db.disposeWindow();
+                        }
+                    });
+
+                    db.setVisible(true);
+                    break;
+            }
+        }
+    }
+
     private boolean checkAmbient() {
         try {
             ClassLoader.getSystemClassLoader().loadClass("gnu.io.CommPortIdentifier");
@@ -191,10 +219,13 @@ public class SplashScreen extends javax.swing.JFrame {
         return true;
     }
 
-    private boolean isOk = false;
-
     private boolean checkInternetConn() throws Exception {
-        infoDisplayer.setText("Conectando ao servidor principal");
+        infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
+        infoDisplayer.setText("Testando a conexão com a rede");
+        for (int i = 0; i < 10; i++) {
+            jProgressBar1.setValue(i);
+            Thread.sleep(10);
+        }
 
         try {
             URL url = new URL("https://www.google.com");
@@ -206,14 +237,28 @@ public class SplashScreen extends javax.swing.JFrame {
             throw new Exception("Internet");
         }
 
+        for (int i = 10; i < 30; i++) {
+            jProgressBar1.setValue(i);
+            Thread.sleep(10);
+        }
+
+        infoDisplayer.setText("Conectando ao servidor principal");
         Connection conn = UsefulMethods.getDBInstance();
+        for (int i = 30; i < 50; i++) {
+            jProgressBar1.setValue(i);
+            Thread.sleep(10);
+        }
+
         if (conn == null) {
             errorDetail = "Não foi possível se conectar ao banco de dados \"" + "Batatinha" /* obter nome pelo arquivo de configuração */ + "\". Isso pode ter sido causado "
                     + "por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
 
             throw new Exception("DB");
         }
-
+        for (int i = 50; i < 60; i++) {
+            jProgressBar1.setValue(i);
+            Thread.sleep(5);
+        }
 //        try {
 //            Statement teste = conn.createStatement();
 //            ResultSet resultado = teste.executeQuery("SELECT * FROM usuario");
@@ -224,7 +269,6 @@ public class SplashScreen extends javax.swing.JFrame {
 //        } catch (SQLException ex) {
 //            Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        System.out.println("yes");
         return true;
     }
 
