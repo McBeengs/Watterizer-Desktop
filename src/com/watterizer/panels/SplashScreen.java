@@ -3,6 +3,7 @@ package com.watterizer.panels;
 import com.watterizer.panels.login.LoginJFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
@@ -45,46 +46,33 @@ public class SplashScreen extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splashLogo = new javax.swing.JLabel();
         infoDisplayer = new javax.swing.JLabel();
         jProgressBar1 = new javax.swing.JProgressBar();
+        splashLogo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(1.0f, 1.0f, 1.0f, 0.0f));
+        setMaximumSize(new java.awt.Dimension(1005, 240));
+        setMinimumSize(new java.awt.Dimension(1005, 240));
+        setPreferredSize(new java.awt.Dimension(1005, 240));
         setResizable(false);
+        getContentPane().setLayout(null);
+
+        infoDisplayer.setBackground(new java.awt.Color(0, 0, 0));
+        infoDisplayer.setForeground(new java.awt.Color(255, 255, 255));
+        infoDisplayer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        infoDisplayer.setOpaque(true);
+        getContentPane().add(infoDisplayer);
+        infoDisplayer.setBounds(10, 190, 280, 30);
+
+        jProgressBar1.setBorder(new RoundedCornerBorder(25, 25, Color.BLACK));
+        jProgressBar1.setOpaque(true);
+        getContentPane().add(jProgressBar1);
+        jProgressBar1.setBounds(310, 190, 540, 30);
 
         splashLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/images/splash.png"))); // NOI18N
-
-        infoDisplayer.setBackground(new java.awt.Color(204, 0, 51));
-        infoDisplayer.setOpaque(true);
-
-        jProgressBar1.setBorder(new RoundedCornerBorder(35, 35));
-        jProgressBar1.setOpaque(true);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(splashLogo)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(27, 27, 27)
-                .addComponent(infoDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(splashLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(infoDisplayer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE))
-                .addContainerGap())
-        );
+        getContentPane().add(splashLogo);
+        splashLogo.setBounds(-30, -10, 1006, 250);
 
         pack();
         setLocationRelativeTo(null);
@@ -148,7 +136,7 @@ public class SplashScreen extends javax.swing.JFrame {
         } catch (Exception ex) {
             switch (ex.getMessage()) {
                 case "Internet":
-                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
+                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet.", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
                     internet.setRightButtonAction(new ActionListener() {
                         @Override
@@ -173,7 +161,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     internet.setVisible(true);
                     break;
                 case "DB":
-                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet.", errorDetail, GenericErrorJFrame.OK_RETRY);
+                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet.", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
                     db.setRightButtonAction(new ActionListener() {
                         @Override

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.watterizer.style;
 
 import java.awt.Color;
@@ -16,17 +11,15 @@ import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- *
- * @author 15153769
- */
 public class RoundedCornerBorder extends javax.swing.border.AbstractBorder {
 
     private final float arcWidth, arcHeight;
+    private final Color cornerFill;
 
-    public RoundedCornerBorder(float arcWidth, float arcHeight) {
+    public RoundedCornerBorder(float arcWidth, float arcHeight, Color cornerFill) {
         this.arcWidth = arcWidth;
         this.arcHeight = arcHeight;
+        this.cornerFill = cornerFill;
     }
 
     @Override
@@ -36,7 +29,7 @@ public class RoundedCornerBorder extends javax.swing.border.AbstractBorder {
         RoundRectangle2D round = new RoundRectangle2D.Float(0, 0, width - 1, height - 1, arcWidth, arcHeight);
         Container parent = c.getParent();
         if (parent != null) {
-            g2.setColor(parent.getBackground());
+            g2.setColor(cornerFill);
             Area corner = new Area(new Rectangle2D.Float(x, y, width, height));
             corner.subtract(new Area(round));
             g2.fill(corner);
