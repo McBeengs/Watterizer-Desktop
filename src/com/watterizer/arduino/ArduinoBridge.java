@@ -110,7 +110,6 @@ public class ArduinoBridge {
         return true;
     }
 
-    @SuppressWarnings("")
     public void startCheckIn() {
         if (!isBeingChecked) {
             isBeingChecked = true;

@@ -51,10 +51,9 @@ public class SplashScreen extends javax.swing.JFrame {
         splashLogo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Watterizer");
         setBackground(new java.awt.Color(1.0f, 1.0f, 1.0f, 0.0f));
-        setMaximumSize(new java.awt.Dimension(1005, 240));
         setMinimumSize(new java.awt.Dimension(1005, 240));
-        setPreferredSize(new java.awt.Dimension(1005, 240));
         setResizable(false);
         getContentPane().setLayout(null);
 

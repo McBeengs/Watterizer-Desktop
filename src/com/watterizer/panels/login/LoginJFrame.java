@@ -201,13 +201,16 @@ public class LoginJFrame extends javax.swing.JFrame {
                 return false;
             }
         } else {
-            try {
-                //paintInput(0, 0);
-                //paintInput(1, 0);
-                checkDB();
-            } catch (SQLException ex) {
-                Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        checkDB();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }.start();
             return true;
         }
 
