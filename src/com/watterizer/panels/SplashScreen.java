@@ -136,12 +136,13 @@ public class SplashScreen extends javax.swing.JFrame {
         } catch (Exception ex) {
             switch (ex.getMessage()) {
                 case "Internet":
-                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet.", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
+                    GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
                     internet.setRightButtonAction(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             internet.disposeWindow();
+                            dispose();
                         }
                     });
 
@@ -161,12 +162,13 @@ public class SplashScreen extends javax.swing.JFrame {
                     internet.setVisible(true);
                     break;
                 case "DB":
-                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet.", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
+                    GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
                     db.setRightButtonAction(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             db.disposeWindow();
+                            dispose();
                         }
                     });
 
@@ -238,7 +240,7 @@ public class SplashScreen extends javax.swing.JFrame {
         }
 
         if (conn == null) {
-            errorDetail = "Não foi possível se conectar ao banco de dados \"" + "Batatinha" /* obter nome pelo arquivo de configuração */ + "\". Isso pode ter sido causado "
+            errorDetail = "Não foi possível se conectar ao banco de dados \"" + "Watterizer" /* obter nome pelo arquivo de configuração */ + "\". Isso pode ter sido causado "
                     + "por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
 
             throw new Exception("DB");
