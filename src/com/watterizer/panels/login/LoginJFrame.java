@@ -1,18 +1,23 @@
 package com.watterizer.panels.login;
 
+import com.watterizer.panels.main.MainJFrame;
 import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class LoginJFrame extends javax.swing.JFrame {
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public LoginJFrame() {
         initComponents();
+        setTitle("Login | Watterizer");
     }
 
     @SuppressWarnings("unchecked")
@@ -51,7 +56,19 @@ public class LoginJFrame extends javax.swing.JFrame {
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel3.setText("Password");
 
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/lilCog.png"))); // NOI18N
         jLabel4.setText("Configurações Administrativas");
+        jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel4MouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                jLabel4MouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                jLabel4MouseExited(evt);
+            }
+        });
 
         jButton1.setText("Login");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -64,7 +81,7 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         errorLog.setForeground(new java.awt.Color(255, 51, 51));
         errorLog.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        errorLog.setText("bah");
+        errorLog.setText("    ");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -118,7 +135,7 @@ public class LoginJFrame extends javax.swing.JFrame {
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(errorLog, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
                 .addComponent(jLabel4)
                 .addContainerGap())
         );
@@ -133,25 +150,7 @@ public class LoginJFrame extends javax.swing.JFrame {
             public void run() {
                 try {
                     if (checkInput()) {
-                        Connection conn = UsefulMethods.getDBInstance();
-                        PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
-                        statement.setString(1, userInput.getText());
-
-                        String getPass = "";
-                        char[] array = passInput.getPassword();
-                        for (int i = 0; i < array.length; i++) {
-                            getPass += array[i];
-                        }
-                        statement.setString(2, getPass);
-
-                        ResultSet result = statement.executeQuery();
-                        if (result.next()) {
-                            System.out.println("tem registro");
-                        } else {
-                            errorLog.setText("Não tem registro");
-                            paintInput(0, 1);
-                            paintInput(1, 1);
-                        }
+                        checkDB();
                     }
                 } catch (SQLException ex) {
                     Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -175,6 +174,18 @@ public class LoginJFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_passInputKeyPressed
 
+    private void jLabel4MouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_jLabel4MouseEntered
+
+    private void jLabel4MouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_jLabel4MouseExited
+
+    private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
+        JOptionPane.showMessageDialog(null, "Essa opção ainda não esta pronta", "Ops", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jLabel4MouseClicked
+
     private boolean checkInput() {
         if (userInput.getText().length() == 0 || passInput.getPassword().length == 0) {
             if (userInput.getText().length() <= 0 && passInput.getPassword().length <= 0) {
@@ -192,8 +203,13 @@ public class LoginJFrame extends javax.swing.JFrame {
                 return false;
             }
         } else {
-            paintInput(0, 0);
-            paintInput(1, 0);
+            try {
+                //paintInput(0, 0);
+                //paintInput(1, 0);
+                checkDB();
+            } catch (SQLException ex) {
+                Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
             return true;
         }
 
@@ -204,25 +220,46 @@ public class LoginJFrame extends javax.swing.JFrame {
         switch (color) {
             case 0:
                 if (input == 0) {
-                    userInput.setBackground(Color.green);
+                    userInput.setBackground(new Color(50, 205, 50));
                 } else {
-                    passInput.setBackground(Color.green);
+                    passInput.setBackground(new Color(50, 205, 50));
                 }
                 break;
             case 1:
-                if (input == 1) {
-                    userInput.setBackground(Color.red);
+                if (input == 0) {
+                    userInput.setBackground(new Color(238, 44, 44));
                 } else {
-                    passInput.setBackground(Color.red);
+                    passInput.setBackground(new Color(238, 44, 44));
                 }
                 break;
             case 2:
-                if (input == 1) {
-                    passInput.setBackground(this.getBackground());
-                } else {
-                    userInput.setBackground(this.getBackground());
-                }
+                passInput.setBackground(Color.WHITE);
+                userInput.setBackground(Color.WHITE);
+                errorLog.setText("    ");
                 break;
+        }
+    }
+
+    private void checkDB() throws SQLException {
+        Connection conn = UsefulMethods.getDBInstance();
+        PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
+        statement.setString(1, userInput.getText());
+
+        String getPass = "";
+        char[] array = passInput.getPassword();
+        for (int i = 0; i < array.length; i++) {
+            getPass += array[i];
+        }
+        statement.setString(2, getPass);
+
+        ResultSet result = statement.executeQuery();
+        if (result.next()) {
+            new MainJFrame().setVisible(true);
+            dispose();
+        } else {
+            errorLog.setText("Não foi encontrado nenhum registro");
+            paintInput(0, 1);
+            paintInput(1, 1);
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
