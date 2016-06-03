@@ -2,6 +2,7 @@ package com.watterizer.panels.login;
 
 import com.watterizer.panels.main.MainJFrame;
 import com.watterizer.util.UsefulMethods;
+import com.watterizer.util.UserModel;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.sql.Connection;
@@ -143,6 +144,11 @@ public class LoginJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        userInput.setEnabled(false);
+        passInput.setEnabled(false);
+        jCheckBox1.setEnabled(false);
+        jButton1.setEnabled(false);
+
         new Thread() {
             @Override
             public void run() {
@@ -161,6 +167,10 @@ public class LoginJFrame extends javax.swing.JFrame {
     private void userInputKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_userInputKeyPressed
         paintInput(0, 2);
         if (evt.getKeyCode() == 10) {
+            userInput.setEnabled(false);
+            passInput.setEnabled(false);
+            jCheckBox1.setEnabled(false);
+            jButton1.setEnabled(false);
             checkInput();
         }
     }//GEN-LAST:event_userInputKeyPressed
@@ -168,6 +178,10 @@ public class LoginJFrame extends javax.swing.JFrame {
     private void passInputKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_passInputKeyPressed
         paintInput(1, 2);
         if (evt.getKeyCode() == 10) {
+            userInput.setEnabled(false);
+            passInput.setEnabled(false);
+            jCheckBox1.setEnabled(false);
+            jButton1.setEnabled(false);
             checkInput();
         }
     }//GEN-LAST:event_passInputKeyPressed
@@ -190,14 +204,26 @@ public class LoginJFrame extends javax.swing.JFrame {
                 errorLog.setText("Username e Password vazios");
                 paintInput(0, 1);
                 paintInput(1, 1);
+                userInput.setEnabled(true);
+                passInput.setEnabled(true);
+                jCheckBox1.setEnabled(true);
+                jButton1.setEnabled(true);
                 return false;
             } else if (userInput.getText().length() <= 0) {
                 errorLog.setText("Username vazio");
                 paintInput(0, 1);
+                userInput.setEnabled(true);
+                passInput.setEnabled(true);
+                jCheckBox1.setEnabled(true);
+                jButton1.setEnabled(true);
                 return false;
             } else if (passInput.getPassword().length <= 0) {
                 errorLog.setText("Password vazio");
                 paintInput(1, 1);
+                userInput.setEnabled(true);
+                passInput.setEnabled(true);
+                jCheckBox1.setEnabled(true);
+                jButton1.setEnabled(true);
                 return false;
             }
         } else {
@@ -243,25 +269,53 @@ public class LoginJFrame extends javax.swing.JFrame {
 
     private void checkDB() throws SQLException {
         Connection conn = UsefulMethods.getDBInstance();
-        PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
+        PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ?");
         statement.setString(1, userInput.getText());
 
-        String getPass = "";
-        char[] array = passInput.getPassword();
-        for (int i = 0; i < array.length; i++) {
-            getPass += array[i];
-        }
-        statement.setString(2, getPass);
-
         ResultSet result = statement.executeQuery();
-        if (result.next()) {
-            new MainJFrame().setVisible(true);
-            dispose();
-        } else {
-            errorLog.setText("Não foi encontrado nenhum registro");
+        if (result.next()) { // o usuário existe no banco, mas a senha não necessariamente está correta
+            statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
+            statement.setString(1, userInput.getText());
+
+            String getPass = "";
+            char[] array = passInput.getPassword();
+            for (int i = 0; i < array.length; i++) {
+                getPass += array[i];
+            }
+            statement.setString(2, getPass);
+
+            result = statement.executeQuery();
+            if (result.next()) { // a senha está correta
+                UserModel model = new UserModel();
+                model.setId(result.getInt("id"));
+                model.setNome(result.getString("nome"));
+                model.setRg(result.getString("rg"));
+                model.setTelefone(result.getString("telefone"));
+                model.setEmail(result.getString("email"));
+                model.setUsername(result.getString("username"));
+                model.setSenha(result.getString("senha"));
+                model.setIdPerfil(result.getInt("idPerfil"));
+                model.setIdPergunta(result.getInt("idPergunta"));
+                model.setResposta(result.getString("resposta"));
+                model.setPosicao(result.getInt("posicao"));
+                UsefulMethods.setCurrentUserModel(model);
+
+                new MainJFrame().setVisible(true);
+                dispose();
+            } else { // a senha não está correta
+                errorLog.setText("A senha para o usuário \"" + userInput.getText() + "\" esta incorreta");
+                paintInput(1, 1);
+            }
+        } else { // o usuário não existe no banco
+            errorLog.setText("Não foi encontrado nenhum usuário com o nome \"" + userInput.getText() + "\"");
             paintInput(0, 1);
             paintInput(1, 1);
         }
+
+        userInput.setEnabled(true);
+        passInput.setEnabled(true);
+        jCheckBox1.setEnabled(true);
+        jButton1.setEnabled(true);
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel errorLog;

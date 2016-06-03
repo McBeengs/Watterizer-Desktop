@@ -25,7 +25,6 @@ import java.awt.GridBagLayout;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
-import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -36,7 +35,7 @@ import javax.swing.ImageIcon;
 
 public class MainJFrame extends javax.swing.JFrame {
 
-    private boolean isIconfied = false;
+    //private boolean isIconfied = false;
     private int currentPanel;
     private final UserPanel userPanel;
     private final MeasurerPanel measurerPanel;
@@ -78,7 +77,7 @@ public class MainJFrame extends javax.swing.JFrame {
                         setState(Frame.NORMAL);
                     });
                     popup.add(defaultItem);
-                    TrayIcon trayIcon = new TrayIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/error.png")).getImage(), "Watterizer", popup);
+                    TrayIcon trayIcon = new TrayIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/ic_logo_16.png")).getImage(), "Watterizer", popup);
                     trayIcon.addActionListener((ActionEvent e1) -> {
                         setVisible(true);
                         setState(Frame.NORMAL);
@@ -106,19 +105,16 @@ public class MainJFrame extends javax.swing.JFrame {
         }
 
         mainPanel.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
         userPanel = new UserPanel();
         measurerPanel = new MeasurerPanel();
         rankingPanel = new RankingPanel();
-        c.gridx = 0;
-        c.gridy = 0;
         userPanel.setVisible(false);
         measurerPanel.setVisible(true);
         rankingPanel.setVisible(false);
 
-        mainPanel.add(userPanel, c);
-        mainPanel.add(measurerPanel, c);
-        mainPanel.add(rankingPanel, c);
+        mainPanel.add(userPanel);
+        mainPanel.add(measurerPanel);
+        mainPanel.add(rankingPanel);
 
         changeMainPanel(1);
     }
@@ -140,6 +136,8 @@ public class MainJFrame extends javax.swing.JFrame {
         optionsItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(900, 525));
+        setPreferredSize(new java.awt.Dimension(900, 525));
 
         leftBigButton.setBackground(new java.awt.Color(255, 102, 0));
 

@@ -49,6 +49,7 @@ public class UsefulMethods {
     private static XmlManager options;
     private static XmlManager language;
     private static Connection conn = null;
+    private static UserModel model;
 
     public static String getOptions() {
         //get OS
@@ -94,6 +95,23 @@ public class UsefulMethods {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+    
+    public static UserModel getCurrentUserModel() {
+        return model;
+    }
+    
+    public static void setCurrentUserModel(UserModel model) {
+        UsefulMethods.model = model;
+    }
+    
+    public static void saveCurrentUserModel() {
+        Connection db = getDBInstance();
+        try {
+            db.createStatement().execute("UPDATE usuario SET username='" + getCurrentUserModel().getUsername() + "'");
+        } catch (SQLException ex) {
+            Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static XmlManager getManagerInstance(int manager) {
