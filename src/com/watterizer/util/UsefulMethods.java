@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Locale;
@@ -108,7 +109,17 @@ public class UsefulMethods {
     public static void saveCurrentUserModel() {
         Connection db = getDBInstance();
         try {
-            db.createStatement().execute("UPDATE usuario SET username='" + getCurrentUserModel().getUsername() + "'");
+            PreparedStatement statement =  db.prepareStatement("UPDATE usuario SET username = ?, senha = ?, email = ?, nome = ?, telefone = ?, idPergunta = ?, resposta = ? WHERE id = ?");
+            statement.setString(1, getCurrentUserModel().getUsername());
+            statement.setString(2, getCurrentUserModel().getSenha());
+            statement.setString(3, getCurrentUserModel().getEmail());
+            statement.setString(4, getCurrentUserModel().getNome());
+            statement.setString(5, getCurrentUserModel().getTelefone());
+            statement.setInt(6, getCurrentUserModel().getIdPergunta());
+            statement.setString(7, getCurrentUserModel().getResposta());
+            statement.setInt(8, getCurrentUserModel().getId());
+            
+            statement.execute();
         } catch (SQLException ex) {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -273,7 +284,8 @@ public class UsefulMethods {
         } else {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
-                conn = DriverManager.getConnection("jdbc:mysql://www.db4free.net:3306/watterizer", "watterizer", "senairianos115");
+                //conn = DriverManager.getConnection("jdbc:mysql://www.db4free.net:3306/watterizer", "watterizer", "senairianos115");
+                conn = DriverManager.getConnection("jdbc:mysql://localhost/watterizer", "root", "");
             } catch (ClassNotFoundException | SQLException ex) {
                 return null;
             }

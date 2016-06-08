@@ -1,5 +1,6 @@
 package com.watterizer.panels.login;
 
+import com.watterizer.crypto.Encrypter;
 import com.watterizer.panels.main.MainJFrame;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.util.UserModel;
@@ -282,7 +283,7 @@ public class LoginJFrame extends javax.swing.JFrame {
             for (int i = 0; i < array.length; i++) {
                 getPass += array[i];
             }
-            statement.setString(2, getPass);
+            statement.setString(2, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, getPass));
 
             result = statement.executeQuery();
             if (result.next()) { // a senha está correta

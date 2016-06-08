@@ -16,14 +16,17 @@
  */
 package com.watterizer.panels.main;
 
+import com.watterizer.crypto.Encrypter;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -31,15 +34,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class UserPanel extends javax.swing.JPanel {
 
     private Connection db;
     private GridBagConstraints gbc;
     private ArrayList<String> perguntas;
+    private ImageIcon icon;
     private String pergunta;
     private boolean isEditing = false;
 
@@ -60,17 +70,15 @@ public class UserPanel extends javax.swing.JPanel {
         gbc.anchor = GridBagConstraints.NORTHWEST;
         container.add(new ShowPanel(), gbc);
 
-        ImageIcon userIcon;
         try {
             URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
-            Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
-            userIcon = new ImageIcon(url);
+            //Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
+            icon = new ImageIcon(url);
         } catch (Exception ex) {
-            userIcon = new ImageIcon(getClass().getResource("/com/watterizer/style/images/errorScreen.png"));
+            icon = new ImageIcon(getClass().getResource("/com/watterizer/style/images/errorScreen.png"));
         }
 
-        iconDisplayer.setIcon(userIcon);
-
+        iconDisplayer.setIcon(icon);
     }
 
     @SuppressWarnings("unchecked")
@@ -85,6 +93,18 @@ public class UserPanel extends javax.swing.JPanel {
         iconDisplayer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         iconDisplayer.setText(" ");
         iconDisplayer.setBorder(new RoundedCornerBorder(255, 255, getBackground()));
+        iconDisplayer.setOpaque(true);
+        iconDisplayer.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                iconDisplayerMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                iconDisplayerMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                iconDisplayerMouseExited(evt);
+            }
+        });
 
         editButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/notepad.png"))); // NOI18N
         editButton.setText("Editar");
@@ -109,26 +129,25 @@ public class UserPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 220, Short.MAX_VALUE)
-                        .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(31, 31, 31)
-                        .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 238, Short.MAX_VALUE)
+                        .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(28, 28, 28)
+                        .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(57, 57, 57)
-                        .addComponent(editButton))
-                    .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(9, 9, 9)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 224, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(editButton))
+                .addGap(18, 18, 18)
                 .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -161,18 +180,18 @@ public class UserPanel extends javax.swing.JPanel {
                 senha += c;
             }
             if (!UsefulMethods.getCurrentUserModel().getSenha().equals(senha)) {
-                UsefulMethods.getCurrentUserModel().setSenha(senha);
+                UsefulMethods.getCurrentUserModel().setSenha(Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, senha));
                 hasChanged = true;
             }
 
             int idNova;
             for (idNova = 0; idNova < perguntas.size(); idNova++) {
-                if (panel.perguntaLabel.getSelectedItem().toString().contains(perguntas.get(idNova))) {
+                if (panel.perguntaLabel.getSelectedItem().toString().equals(perguntas.get(idNova))) {
                     break;
                 }
             }
 
-            idNova = Integer.parseInt(perguntas.get(idNova).substring(1, 2));
+            idNova = Integer.parseInt(perguntas.get(idNova - 1).substring(1, 2));
             if (UsefulMethods.getCurrentUserModel().getIdPergunta() != idNova) {
                 UsefulMethods.getCurrentUserModel().setIdPergunta(idNova);
                 hasChanged = true;
@@ -181,20 +200,21 @@ public class UserPanel extends javax.swing.JPanel {
                 UsefulMethods.getCurrentUserModel().setResposta(panel.respostaLabel.getText());
                 hasChanged = true;
             }
-            
+
             if (hasChanged) {
                 UsefulMethods.saveCurrentUserModel();
             }
 
             container.removeAll();
             editButton.setText("Editar");
-            container.add(new ShowPanel(), gbc);
+            iconDisplayer.setIcon(icon);
+            container.add(new ShowPanel());
             isEditing = false;
             container.revalidate();
         } else {
             editButton.setText("Carregando...");
-            iconDisplayer.setEnabled(false);
             editButton.setEnabled(false);
+            iconDisplayer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/notepad.png")));
             ShowPanel panel = (ShowPanel) container.getComponent(0);
             panel.deactivateAll();
 
@@ -203,16 +223,87 @@ public class UserPanel extends javax.swing.JPanel {
                 public void run() {
                     EditPanel set = new EditPanel();
                     container.removeAll();
-                    editButton.setText("Salvar mudanças");
+                    editButton.setText("Salvar");
                     editButton.setEnabled(true);
-                    iconDisplayer.setEnabled(true);
-                    container.add(set, gbc);
+                    container.add(set);
                     isEditing = true;
                     container.revalidate();
                 }
             }.start();
         }
     }//GEN-LAST:event_editButtonMouseClicked
+
+    private void iconDisplayerMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseEntered
+        if (isEditing) {
+            iconDisplayer.setEnabled(true);
+        }
+    }//GEN-LAST:event_iconDisplayerMouseEntered
+
+    private void iconDisplayerMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseExited
+        if (isEditing) {
+            iconDisplayer.setEnabled(false);
+        }
+    }//GEN-LAST:event_iconDisplayerMouseExited
+
+    private void iconDisplayerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseClicked
+        if (isEditing) {
+            if (evt.getButton() == 1) {
+                rightClickEvent();
+            } else if (evt.getButton() == 3) {
+                JPopupMenu menu = new JPopupMenu();
+                JMenuItem change = new JMenuItem(new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        rightClickEvent();
+                    }
+                });
+                change.setText("Alterar imagem");
+                menu.add(change);
+
+                menu.show(evt.getComponent(), evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_iconDisplayerMouseClicked
+
+    private void rightClickEvent() {
+        JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileFilter(new FileNameExtensionFilter("Todos ", "gif", "png"));
+
+        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            try {
+                File file = chooser.getSelectedFile();
+                String ftpUrl = String.format("ftp://%s:%s@%s/%s;type=i", "bruno", "bruno", "10.0.3.230:21", "fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png");
+                FileInputStream inputStream;
+                try (OutputStream outputStream = new URL(ftpUrl).openConnection().getOutputStream()) {
+                    inputStream = new FileInputStream(file);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                }
+                inputStream.close();
+
+                try {
+                    URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
+                    //Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
+                    icon = new ImageIcon(url);
+                } catch (Exception ex) {
+                    System.out.println("erro atualizando a imagem após upload");
+                    icon = new ImageIcon(getClass().getResource("/com/watterizer/style/images/errorScreen.png"));
+                }
+
+                JOptionPane.showMessageDialog(null, "A imagem foi alterada. Poderá ser preciso reiniciar o programa.", "Alerta", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (MalformedURLException ex) {
+                Logger.getLogger(UserPanel.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(UserPanel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel container;
@@ -245,8 +336,9 @@ public class UserPanel extends javax.swing.JPanel {
             t7 = new javax.swing.JLabel();
             respostaLabel = new javax.swing.JLabel();
 
-            setPreferredSize(new java.awt.Dimension(620, 203));
+            iconDisplayer.setEnabled(true);
 
+            //setPreferredSize(new java.awt.Dimension(620, 203));
             t1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
             t1.setText("Nome:");
 
@@ -400,8 +492,10 @@ public class UserPanel extends javax.swing.JPanel {
             t5 = new javax.swing.JLabel();
             passwordLabel = new javax.swing.JPasswordField();
             t6 = new javax.swing.JLabel();
-            perguntaLabel = new javax.swing.JComboBox();
 
+            iconDisplayer.setEnabled(false);
+
+            perguntaLabel = new javax.swing.JComboBox();
             String[] big = new String[]{"--- Selecione uma pergunta ---"};
             perguntas = new ArrayList<>();
             try {
@@ -418,23 +512,17 @@ public class UserPanel extends javax.swing.JPanel {
                 for (int i = 0; i < perguntas.size(); i++) {
                     big[i + 1] = perguntas.get(i).substring(3, perguntas.get(i).length());
                 }
-
-                perguntaLabel.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        int selected = perguntaLabel.getSelectedIndex();
-
-                        if (selected - 1 >= 0) {
-                            int id = Integer.parseInt(perguntas.get(selected - 1).substring(1, 2));
-                            System.out.println(id);
-                        }
-                    }
-                });
             } catch (SQLException ex) {
                 Logger.getLogger(UserPanel.class.getName()).log(Level.SEVERE, null, ex);
             }
             perguntaLabel.setModel(new DefaultComboBoxModel(big));
-            perguntaLabel.setSelectedIndex(1);
+
+            for (int i = 0; i < perguntaLabel.getItemCount(); i++) {
+                if (perguntaLabel.getItemAt(i).equals(pergunta)) {
+                    perguntaLabel.setSelectedIndex(i);
+                    break;
+                }
+            }
 
             t7 = new javax.swing.JLabel();
             respostaLabel = new javax.swing.JTextField();
@@ -487,7 +575,7 @@ public class UserPanel extends javax.swing.JPanel {
                                     .addComponent(t3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(t2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(t1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(t7, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(t7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGap(18, 18, 18)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(nameLabel)

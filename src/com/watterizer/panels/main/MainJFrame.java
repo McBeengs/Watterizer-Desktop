@@ -20,7 +20,6 @@ import com.watterizer.panels.options.OptionsJFrame;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -136,8 +135,8 @@ public class MainJFrame extends javax.swing.JFrame {
         optionsItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(900, 525));
-        setPreferredSize(new java.awt.Dimension(900, 525));
+        setMinimumSize(new java.awt.Dimension(900, 550));
+        setPreferredSize(new java.awt.Dimension(900, 550));
 
         leftBigButton.setBackground(new java.awt.Color(255, 102, 0));
 
