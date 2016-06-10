@@ -42,6 +42,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class UserPanel extends javax.swing.JPanel {
@@ -57,7 +59,7 @@ public class UserPanel extends javax.swing.JPanel {
         initComponents();
         db = UsefulMethods.getDBInstance();
         try {
-            ResultSet rs = db.createStatement().executeQuery("SELECT * FROM perguntaseguranca WHERE id = "
+            ResultSet rs = db.createStatement().executeQuery("SELECT * FROM perguntasecreta WHERE id = "
                     + UsefulMethods.getCurrentUserModel().getIdPergunta());
             rs.next();
             pergunta = rs.getString("pergunta");
@@ -86,8 +88,11 @@ public class UserPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         iconDisplayer = new javax.swing.JLabel();
-        editButton = new javax.swing.JLabel();
         container = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        editButton = new javax.swing.JLabel();
+
+        setBackground(new java.awt.Color(255, 0, 0));
 
         iconDisplayer.setBackground(new java.awt.Color(0, 0, 0));
         iconDisplayer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -106,14 +111,6 @@ public class UserPanel extends javax.swing.JPanel {
             }
         });
 
-        editButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/notepad.png"))); // NOI18N
-        editButton.setText("Editar");
-        editButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                editButtonMouseClicked(evt);
-            }
-        });
-
         javax.swing.GroupLayout containerLayout = new javax.swing.GroupLayout(container);
         container.setLayout(containerLayout);
         containerLayout.setHorizontalGroup(
@@ -122,7 +119,35 @@ public class UserPanel extends javax.swing.JPanel {
         );
         containerLayout.setVerticalGroup(
             containerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 243, Short.MAX_VALUE)
+            .addGap(0, 249, Short.MAX_VALUE)
+        );
+
+        jPanel1.setBackground(new java.awt.Color(0, 255, 0));
+
+        editButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        editButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/notepad.png"))); // NOI18N
+        editButton.setText("Editar");
+        editButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                editButtonMouseClicked(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(27, 27, 27)
+                .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(80, 80, 80)
+                .addComponent(editButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -130,24 +155,25 @@ public class UserPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 238, Short.MAX_VALUE)
+                        .addContainerGap(248, Short.MAX_VALUE)
                         .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(28, 28, 28)
-                        .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(9, 9, 9)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 224, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(editButton))
-                .addGap(18, 18, 18)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(iconDisplayer, javax.swing.GroupLayout.DEFAULT_SIZE, 224, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(container, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -196,8 +222,8 @@ public class UserPanel extends javax.swing.JPanel {
                 UsefulMethods.getCurrentUserModel().setIdPergunta(idNova);
                 hasChanged = true;
             }
-            if (!UsefulMethods.getCurrentUserModel().getResposta().equals(panel.respostaLabel.getText())) {
-                UsefulMethods.getCurrentUserModel().setResposta(panel.respostaLabel.getText());
+            if (!UsefulMethods.getCurrentUserModel().getRespostaPergunta().equals(panel.respostaLabel.getText())) {
+                UsefulMethods.getCurrentUserModel().setRespostaPergunta(panel.respostaLabel.getText());
                 hasChanged = true;
             }
 
@@ -233,17 +259,17 @@ public class UserPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_editButtonMouseClicked
 
-    private void iconDisplayerMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseEntered
-        if (isEditing) {
-            iconDisplayer.setEnabled(true);
-        }
-    }//GEN-LAST:event_iconDisplayerMouseEntered
-
     private void iconDisplayerMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseExited
         if (isEditing) {
             iconDisplayer.setEnabled(false);
         }
     }//GEN-LAST:event_iconDisplayerMouseExited
+
+    private void iconDisplayerMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseEntered
+        if (isEditing) {
+            iconDisplayer.setEnabled(true);
+        }
+    }//GEN-LAST:event_iconDisplayerMouseEntered
 
     private void iconDisplayerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconDisplayerMouseClicked
         if (isEditing) {
@@ -309,6 +335,7 @@ public class UserPanel extends javax.swing.JPanel {
     private javax.swing.JPanel container;
     private javax.swing.JLabel editButton;
     private javax.swing.JLabel iconDisplayer;
+    private javax.swing.JPanel jPanel1;
     // End of variables declaration//GEN-END:variables
 
     private class ShowPanel extends JPanel {
@@ -376,7 +403,7 @@ public class UserPanel extends javax.swing.JPanel {
             t7.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
             t7.setText("Resposta:");
 
-            respostaLabel.setText(UsefulMethods.getCurrentUserModel().getResposta());
+            respostaLabel.setText(UsefulMethods.getCurrentUserModel().getRespostaPergunta());
 
             javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
             this.setLayout(layout);
@@ -475,6 +502,56 @@ public class UserPanel extends javax.swing.JPanel {
 
         public EditPanel() {
             initComponents();
+            
+            nameLabel.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    if (nameLabel.getText().length() > 50) {
+                        JOptionPane.showMessageDialog(null, "O campo \"Nome\" só pode conter 50 letras.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                        nameLabel.setText(nameLabel.getText().substring(0, 50));
+                    }
+                }
+            });
+            
+            emailLabel.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    if (emailLabel.getText().length() > 50) {
+                        JOptionPane.showMessageDialog(null, "O campo \"E-Mail\" só pode conter 50 letras.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                        emailLabel.setText(emailLabel.getText().substring(0, 50));
+                    }
+                }
+            });
+            
+            telefoneLabel.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    if (telefoneLabel.getText().length() > 14) {
+                        JOptionPane.showConfirmDialog(null, "O campo \"Telefone\" só pode conter 14 caracteres, preferencialmente \"(**) ****-****\".", "Aviso", JOptionPane.YES_OPTION, JOptionPane.INFORMATION_MESSAGE);
+                        
+                    }
+                }
+            });
+            
+            usernameLabel.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    if (usernameLabel.getText().length() > 255) {
+                        JOptionPane.showMessageDialog(null, "O campo \"Username\" só pode conter 255 letras.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                        usernameLabel.setText(usernameLabel.getText().substring(0, 255));
+                    }
+                }
+            });
+            
+            respostaLabel.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    if (usernameLabel.getText().length() > 100) {
+                        JOptionPane.showMessageDialog(null, "O campo \"Resposta\" só pode conter 100 letras.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                        respostaLabel.setText(respostaLabel.getText().substring(0, 100));
+                    }
+                }
+            });
         }
 
         @SuppressWarnings("unchecked")
@@ -499,7 +576,7 @@ public class UserPanel extends javax.swing.JPanel {
             String[] big = new String[]{"--- Selecione uma pergunta ---"};
             perguntas = new ArrayList<>();
             try {
-                ResultSet rs = db.createStatement().executeQuery("SELECT * FROM perguntaseguranca");
+                ResultSet rs = db.createStatement().executeQuery("SELECT * FROM perguntasecreta");
 
                 while (rs.next()) {
                     String found = "[" + rs.getInt("id") + "]" + rs.getString("pergunta");
@@ -560,7 +637,7 @@ public class UserPanel extends javax.swing.JPanel {
             t7.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
             t7.setText("Resposta:");
 
-            respostaLabel.setText(UsefulMethods.getCurrentUserModel().getResposta());
+            respostaLabel.setText(UsefulMethods.getCurrentUserModel().getRespostaPergunta());
 
             javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
             this.setLayout(layout);

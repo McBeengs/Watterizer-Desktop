@@ -18,9 +18,13 @@ package com.watterizer.panels.main;
 
 import com.watterizer.panels.options.OptionsJFrame;
 import java.awt.AWTException;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -103,7 +107,8 @@ public class MainJFrame extends javax.swing.JFrame {
             });
         }
 
-        mainPanel.setLayout(new GridBagLayout());
+        mainPanel.setLayout(new GridLayout(0, 1));
+        
         userPanel = new UserPanel();
         measurerPanel = new MeasurerPanel();
         rankingPanel = new RankingPanel();
@@ -111,9 +116,9 @@ public class MainJFrame extends javax.swing.JFrame {
         measurerPanel.setVisible(true);
         rankingPanel.setVisible(false);
 
-        mainPanel.add(userPanel);
+        //mainPanel.add(userPanel);
         mainPanel.add(measurerPanel);
-        mainPanel.add(rankingPanel);
+        //mainPanel.add(rankingPanel);
 
         changeMainPanel(1);
     }
@@ -136,7 +141,6 @@ public class MainJFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(900, 550));
-        setPreferredSize(new java.awt.Dimension(900, 550));
 
         leftBigButton.setBackground(new java.awt.Color(255, 102, 0));
 
@@ -207,6 +211,8 @@ public class MainJFrame extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(textRightBigButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        mainPanel.setBackground(new java.awt.Color(255, 0, 0));
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
@@ -304,6 +310,8 @@ public class MainJFrame extends javax.swing.JFrame {
 
         switch (position) {
             case 0:
+                mainPanel.removeAll();
+                mainPanel.add(userPanel);
                 userPanel.setVisible(true);
                 measurerPanel.setVisible(false);
                 rankingPanel.setVisible(false);
@@ -315,6 +323,8 @@ public class MainJFrame extends javax.swing.JFrame {
                 setTitle("Usuário | Watterizer");
                 break;
             case 1:
+                mainPanel.removeAll();
+                mainPanel.add(measurerPanel);
                 userPanel.setVisible(false);
                 measurerPanel.setVisible(true);
                 rankingPanel.setVisible(false);
@@ -330,6 +340,8 @@ public class MainJFrame extends javax.swing.JFrame {
                 break;
 
             case 2:
+                mainPanel.removeAll();
+                mainPanel.add(rankingPanel);
                 userPanel.setVisible(false);
                 measurerPanel.setVisible(false);
                 rankingPanel.setVisible(true);

@@ -18,7 +18,6 @@ package com.watterizer.util;
 
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Desktop;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
@@ -47,6 +46,7 @@ public class UsefulMethods {
 
     public static final int OPTIONS = 0;
     public static final int LANGUAGE = 1;
+    private static final long TIME_OF_OPENING = System.currentTimeMillis();
     private static XmlManager options;
     private static XmlManager language;
     private static Connection conn = null;
@@ -109,14 +109,14 @@ public class UsefulMethods {
     public static void saveCurrentUserModel() {
         Connection db = getDBInstance();
         try {
-            PreparedStatement statement =  db.prepareStatement("UPDATE usuario SET username = ?, senha = ?, email = ?, nome = ?, telefone = ?, idPergunta = ?, resposta = ? WHERE id = ?");
-            statement.setString(1, getCurrentUserModel().getUsername());
-            statement.setString(2, getCurrentUserModel().getSenha());
+            PreparedStatement statement =  db.prepareStatement("UPDATE usuario SET nome = ?, username = ?, email = ?, senha = ?, telefone = ?, id_pergunta = ?, resposta_pergunta = ? WHERE id = ?");
+            statement.setString(1, getCurrentUserModel().getNome());
+            statement.setString(2, getCurrentUserModel().getUsername());
             statement.setString(3, getCurrentUserModel().getEmail());
-            statement.setString(4, getCurrentUserModel().getNome());
+            statement.setString(4, getCurrentUserModel().getSenha());
             statement.setString(5, getCurrentUserModel().getTelefone());
             statement.setInt(6, getCurrentUserModel().getIdPergunta());
-            statement.setString(7, getCurrentUserModel().getResposta());
+            statement.setString(7, getCurrentUserModel().getRespostaPergunta());
             statement.setInt(8, getCurrentUserModel().getId());
             
             statement.execute();
@@ -134,17 +134,17 @@ public class UsefulMethods {
             return language;
         }
 
-        UsefulMethods get = new UsefulMethods();
+        UsefulMethods um = new UsefulMethods();
         options = new XmlManager();
         String separator = System.getProperty("file.separator");
         boolean checkOS = false;
 
-        File getConfig = new File(UsefulMethods.getClassPath(get.getClass()) + separator + "config");
+        File getConfig = new File(UsefulMethods.getClassPath(um.getClass()) + separator + "config");
         if (!getConfig.exists()) {
             getConfig.mkdir();
         }
 
-        File getOptions = new File(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
+        File getOptions = new File(UsefulMethods.getClassPath(um.getClass()) + "config" + separator + "options.xml");
         if (!getOptions.exists()) {
             String content = UsefulMethods.getOptions();
 
@@ -154,14 +154,14 @@ public class UsefulMethods {
                     PrintWriter writer = new PrintWriter(getOptions);
                     writer.print(content);
                 } catch (IOException ex) {
-                    Logger.getLogger(get.getClass().getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(um.getClass().getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
                 checkOS = true;
             }
         }
 
-        options.loadFile(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
+        options.loadFile(UsefulMethods.getClassPath(um.getClass()) + "config" + separator + "options.xml");
         switch (manager) {
             case OPTIONS:
                 return options;
@@ -170,7 +170,7 @@ public class UsefulMethods {
                     language = new XmlManager();
                     String temp = options.getContentByName("language", 0);
                     temp = temp.substring(0, temp.indexOf(","));
-                    language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
+                    language.loadFile(UsefulMethods.getClassPath(um.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
 
                     return language;
                 }
@@ -211,8 +211,8 @@ public class UsefulMethods {
         language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
     }
 
-    public static Component makeComponent(String str) {
-        return null;
+    public static long getTimeOfOpening() {
+        return TIME_OF_OPENING;
     }
 
     public static void makeHyperlinkOptionPane(String[] message, String link, int linkIndex, int messageType, String messageTitle) {

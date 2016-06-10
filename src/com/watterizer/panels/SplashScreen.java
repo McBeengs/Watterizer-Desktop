@@ -209,55 +209,46 @@ public class SplashScreen extends javax.swing.JFrame {
     }
 
     private boolean checkInternetConn() throws Exception {
-        infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
-        infoDisplayer.setText("Testando a conexão com a rede");
-        for (int i = 0; i < 10; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
-
-        try {
-            URL url = new URL("https://www.google.com");
-            url.openStream();
-        } catch (Exception ex) {
-            errorDetail = "Não foi possível conectar-se a internet. Isso pode ter sido causado por alguma configuração errada no Sistema Operacional, uma queda no provedor ou "
-                    + "um problema no cabeamento. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
-
-            throw new Exception("Internet");
-        }
-
-        for (int i = 10; i < 30; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
-
-        infoDisplayer.setText("Conectando ao servidor principal");
-        Connection conn = UsefulMethods.getDBInstance();
-        for (int i = 30; i < 50; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
-
-        if (conn == null) {
-            errorDetail = "Não foi possível se conectar ao banco de dados \"" + "Watterizer" /* obter nome pelo arquivo de configuração */ + "\". Isso pode ter sido causado "
-                    + "por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
-
-            throw new Exception("DB");
-        }
-        for (int i = 50; i < 60; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(5);
-        }
-//        try {
-//            Statement teste = conn.createStatement();
-//            ResultSet resultado = teste.executeQuery("SELECT * FROM usuario");
-//            
-//            while (resultado.next()) {
-//                System.out.println(resultado.getString(1));
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+//        infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
+//        infoDisplayer.setText("Testando a conexão com a rede");
+//        for (int i = 0; i < 10; i++) {
+//            jProgressBar1.setValue(i);
+//            Thread.sleep(10);
 //        }
+//
+//        try {
+//            URL url = new URL("https://www.google.com");
+//            url.openStream();
+//        } catch (Exception ex) {
+//            errorDetail = "Não foi possível conectar-se a internet. Isso pode ter sido causado por alguma configuração errada no Sistema Operacional, uma queda no provedor ou "
+//                    + "um problema no cabeamento. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
+//
+//            throw new Exception("Internet");
+//        }
+//
+//        for (int i = 10; i < 30; i++) {
+//            jProgressBar1.setValue(i);
+//            Thread.sleep(10);
+//        }
+//
+//        infoDisplayer.setText("Conectando ao servidor principal");
+//        Connection conn = UsefulMethods.getDBInstance();
+//        for (int i = 30; i < 50; i++) {
+//            jProgressBar1.setValue(i);
+//            Thread.sleep(10);
+//        }
+//
+//        if (conn == null) {
+//            errorDetail = "Não foi possível se conectar ao banco de dados \"" + "Watterizer" /* obter nome pelo arquivo de configuração */ + "\". Isso pode ter sido causado "
+//                    + "por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.";
+//
+//            throw new Exception("DB");
+//        }
+//        for (int i = 50; i < 60; i++) {
+//            jProgressBar1.setValue(i);
+//            Thread.sleep(5);
+//        }
+//        
         return true;
     }
 

@@ -290,15 +290,18 @@ public class LoginJFrame extends javax.swing.JFrame {
                 UserModel model = new UserModel();
                 model.setId(result.getInt("id"));
                 model.setNome(result.getString("nome"));
-                model.setRg(result.getString("rg"));
-                model.setTelefone(result.getString("telefone"));
-                model.setEmail(result.getString("email"));
                 model.setUsername(result.getString("username"));
+                model.setEmail(result.getString("email"));
                 model.setSenha(result.getString("senha"));
-                model.setIdPerfil(result.getInt("idPerfil"));
-                model.setIdPergunta(result.getInt("idPergunta"));
-                model.setResposta(result.getString("resposta"));
-                model.setPosicao(result.getInt("posicao"));
+                model.setTelefone(result.getString("telefone"));
+                model.setDataCadastro(result.getDate("data_cadastro"));
+                model.setHoraInicioExpediente(result.getTime("hora_inicio_expediente"));
+                model.setHoraFimExpediente(result.getTime("hora_fim_expediente"));
+                model.setHoraAlmoco(result.getTime("hora_almoco"));
+                model.setIdPergunta(result.getInt("id_pergunta"));
+                model.setRespostaPergunta(result.getString("resposta_pergunta"));
+                model.setIdSetor(result.getInt("id_setor"));
+                model.setIdPerfil(result.getInt("id_perfil"));
                 UsefulMethods.setCurrentUserModel(model);
 
                 new MainJFrame().setVisible(true);

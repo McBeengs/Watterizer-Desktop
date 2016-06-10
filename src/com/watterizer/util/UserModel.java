@@ -1,18 +1,24 @@
 package com.watterizer.util;
 
+import java.sql.Date;
+import java.sql.Time;
+
 public class UserModel {
     
     private int id;
     private String nome;
-    private String rg;
-    private String telefone;
-    private String email;
     private String username;
+    private String email;
     private String senha;
-    private int idPerfil;
+    private String telefone;
+    private Date dataCadastro;
+    private Time horaInicioExpediente;
+    private Time horaFimExpediente;
+    private Time horaAlmoco;
     private int idPergunta;
-    private String resposta;
-    private int posicao;
+    private String respostaPergunta;
+    private int idSetor;
+    private int idPerfil;
 
     public int getId() {
         return id;
@@ -30,20 +36,12 @@ public class UserModel {
         this.nome = nome;
     }
 
-    public String getRg() {
-        return rg;
+    public String getUsername() {
+        return username;
     }
 
-    public void setRg(String rg) {
-        this.rg = rg;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -54,14 +52,6 @@ public class UserModel {
         this.email = email;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getSenha() {
         return senha;
     }
@@ -70,12 +60,44 @@ public class UserModel {
         this.senha = senha;
     }
 
-    public int getIdPerfil() {
-        return idPerfil;
+    public String getTelefone() {
+        return telefone;
     }
 
-    public void setIdPerfil(int idPerfil) {
-        this.idPerfil = idPerfil;
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+
+    public Date getDataCadastro() {
+        return dataCadastro;
+    }
+
+    public void setDataCadastro(Date dataCadastro) {
+        this.dataCadastro = dataCadastro;
+    }
+
+    public Time getHoraInicioExpediente() {
+        return horaInicioExpediente;
+    }
+
+    public void setHoraInicioExpediente(Time horaInicioExpediente) {
+        this.horaInicioExpediente = horaInicioExpediente;
+    }
+
+    public Time getHoraFimExpediente() {
+        return horaFimExpediente;
+    }
+
+    public void setHoraFimExpediente(Time horaFimExpediente) {
+        this.horaFimExpediente = horaFimExpediente;
+    }
+
+    public Time getHoraAlmoco() {
+        return horaAlmoco;
+    }
+
+    public void setHoraAlmoco(Time horaAlmoco) {
+        this.horaAlmoco = horaAlmoco;
     }
 
     public int getIdPergunta() {
@@ -86,19 +108,28 @@ public class UserModel {
         this.idPergunta = idPergunta;
     }
 
-    public String getResposta() {
-        return resposta;
+    public String getRespostaPergunta() {
+        return respostaPergunta;
     }
 
-    public void setResposta(String resposta) {
-        this.resposta = resposta;
+    public void setRespostaPergunta(String respostaPergunta) {
+        this.respostaPergunta = respostaPergunta;
     }
 
-    public int getPosicao() {
-        return posicao;
+    public int getIdSetor() {
+        return idSetor;
     }
 
-    public void setPosicao(int posicao) {
-        this.posicao = posicao;
+    public void setIdSetor(int idSetor) {
+        this.idSetor = idSetor;
     }
+
+    public int getIdPerfil() {
+        return idPerfil;
+    }
+
+    public void setIdPerfil(int idPerfil) {
+        this.idPerfil = idPerfil;
+    }
+    
 }
