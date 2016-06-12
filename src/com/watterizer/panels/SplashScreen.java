@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.sql.Connection;
+import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
@@ -253,6 +254,7 @@ public class SplashScreen extends javax.swing.JFrame {
     }
 
     public static void main(String args[]) {
+        Locale.setDefault(new Locale("pt", "BR"));
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Windows".equals(info.getName())) {

@@ -18,12 +18,9 @@ package com.watterizer.panels.main;
 
 import com.watterizer.panels.options.OptionsJFrame;
 import java.awt.AWTException;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.Cursor;
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -143,6 +140,14 @@ public class MainJFrame extends javax.swing.JFrame {
         setMinimumSize(new java.awt.Dimension(900, 550));
 
         leftBigButton.setBackground(new java.awt.Color(255, 102, 0));
+        leftBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                leftBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                leftBigButtonMouseExited(evt);
+            }
+        });
 
         textLeftBigButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         textLeftBigButton.setText("Usuário");
@@ -150,6 +155,12 @@ public class MainJFrame extends javax.swing.JFrame {
         textLeftBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 textLeftBigButtonMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                textLeftBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                textLeftBigButtonMouseExited(evt);
             }
         });
 
@@ -159,6 +170,12 @@ public class MainJFrame extends javax.swing.JFrame {
         iconLeftBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 iconLeftBigButtonMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                iconLeftBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                iconLeftBigButtonMouseExited(evt);
             }
         });
 
@@ -178,6 +195,14 @@ public class MainJFrame extends javax.swing.JFrame {
         );
 
         rightBigButton.setBackground(new java.awt.Color(51, 51, 255));
+        rightBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                rightBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                rightBigButtonMouseExited(evt);
+            }
+        });
 
         textRightBigButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         textRightBigButton.setText("Ranking");
@@ -185,6 +210,12 @@ public class MainJFrame extends javax.swing.JFrame {
         textRightBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 textRightBigButtonMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                textRightBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                textRightBigButtonMouseExited(evt);
             }
         });
 
@@ -194,6 +225,12 @@ public class MainJFrame extends javax.swing.JFrame {
         iconRightBigButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 iconRightBigButtonMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                iconRightBigButtonMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                iconRightBigButtonMouseExited(evt);
             }
         });
 
@@ -300,6 +337,54 @@ public class MainJFrame extends javax.swing.JFrame {
             changeMainPanel(2);
         }
     }//GEN-LAST:event_iconRightBigButtonMouseClicked
+
+    private void leftBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_leftBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_leftBigButtonMouseEntered
+
+    private void leftBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_leftBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_leftBigButtonMouseExited
+
+    private void rightBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rightBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_rightBigButtonMouseEntered
+
+    private void rightBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rightBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_rightBigButtonMouseExited
+
+    private void iconLeftBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconLeftBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_iconLeftBigButtonMouseEntered
+
+    private void iconLeftBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconLeftBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_iconLeftBigButtonMouseExited
+
+    private void textLeftBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textLeftBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_textLeftBigButtonMouseEntered
+
+    private void textLeftBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textLeftBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_textLeftBigButtonMouseExited
+
+    private void iconRightBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconRightBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_iconRightBigButtonMouseEntered
+
+    private void iconRightBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconRightBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_iconRightBigButtonMouseExited
+
+    private void textRightBigButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textRightBigButtonMouseEntered
+        setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }//GEN-LAST:event_textRightBigButtonMouseEntered
+
+    private void textRightBigButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textRightBigButtonMouseExited
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_textRightBigButtonMouseExited
 
     private void changeMainPanel(int position) {
         if (position == currentPanel || position < 0 || position > 2) {
