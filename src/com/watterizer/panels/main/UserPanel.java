@@ -21,6 +21,7 @@ import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileInputStream;
@@ -70,10 +71,10 @@ public class UserPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
-                    //URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
-                    //Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
-                    //icon = new ImageIcon(url);
-                    icon = new ImageIcon(new URL("https://66.media.tumblr.com/1108e527b5ed8cc70879517343fae063/tumblr_inline_o60l4rkLr71rqzcqm_500.gif"));
+                    URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
+                    Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
+                    icon = new ImageIcon(url);
+                    //icon = new ImageIcon(new URL("https://66.media.tumblr.com/1108e527b5ed8cc70879517343fae063/tumblr_inline_o60l4rkLr71rqzcqm_500.gif"));
                 } catch (Exception ex) {
                     icon = new ImageIcon(getClass().getResource("/com/watterizer/style/images/errorScreen.png"));
                 }
@@ -176,16 +177,17 @@ public class UserPanel extends javax.swing.JPanel {
             .addComponent(jSeparator2)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(editButton)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(editButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -199,7 +201,7 @@ public class UserPanel extends javax.swing.JPanel {
                 .addComponent(canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(editButton)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -28,15 +28,16 @@ import java.io.ObjectInputStream;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jfree.chart.ChartFactory;
@@ -44,20 +45,16 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.category.SlidingCategoryDataset;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.Hour;
+import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 
 public class MeasurerPanel extends javax.swing.JPanel {
 
     private JFreeChart chart;
+    private Minute minute;
     private Connection conn;
     private java.sql.Date sqlDate;
     private java.sql.Time sqlTime;
@@ -87,16 +84,14 @@ public class MeasurerPanel extends javax.swing.JPanel {
             public void run() {
                 int seconds = 0;
                 double spentAverage = 0;
-                
 
-                try {
-                    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + sqlDate.toString().replaceAll("-", "")
-                            + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
+                try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + sqlDate.toString().replaceAll("-", "")
+                        + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
 
                     if (rs.next()) {
                         dayIsAlreadyStored = true;
                         measure = readGastosArrayOfToday();
-                        
+
                         measure.stream().forEach((d) -> {
                             totalSpent += d * 60.0; // foi dividido por 60, então isso restora o valor original
                         });
@@ -105,7 +100,6 @@ public class MeasurerPanel extends javax.swing.JPanel {
                         sqlTime = new Time(sqlDate.getTime());
                     }
 
-                    rs.close();
                 } catch (SQLException ex) {
                     Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -118,18 +112,18 @@ public class MeasurerPanel extends javax.swing.JPanel {
                     double currentSpent = rgn.nextInt(100) / 100.0;
                     spentAverage += currentSpent;
                     seconds++;
-                    
+
                     currentSpentLabel.setText(currentSpent + " kWh");
                     totalSpent += currentSpent;
                     totalSpentLabel.setText(String.format("%.2f", totalSpent) + " kWh");
-                    
+
                     if (seconds % 60 == 0) {
                         measure.add(spentAverage / 60.0);
                         updateChart(spentAverage / 60.0);
                         spentAverage = 0;
                     }
 
-                    if (seconds % 120 == 0) { // 10 min
+                    if (seconds % 60 == 0) { // 10 min
                         System.out.println("salvar no banco");
                         seconds = 0;
 
@@ -137,22 +131,36 @@ public class MeasurerPanel extends javax.swing.JPanel {
                             @Override
                             public void run() {
                                 try {
+                                    Connection outroBanco = DriverManager.getConnection("jdbc:mysql://sql5.freemysqlhosting.net/sql5123660", "sql5123660", "1aQQ3qMwbt");
                                     if (dayIsAlreadyStored) {
-                                        PreparedStatement prepared = conn.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?");
+                                        try (PreparedStatement prepared = conn.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?")) {
+                                            prepared.setObject(1, measure);
+                                            prepared.setDate(2, sqlDate);
+                                            prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
+                                            prepared.execute();
+                                        }
+                                        PreparedStatement prepared = outroBanco.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?");
                                         prepared.setObject(1, measure);
                                         prepared.setDate(2, sqlDate);
                                         prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
                                         prepared.execute();
-                                        prepared.close();
                                     } else {
-                                        PreparedStatement statement = conn.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)");
+                                        try (PreparedStatement statement = conn.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)")) {
+                                            statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
+                                            statement.setDate(2, sqlDate);
+                                            Time time = new Time(UsefulMethods.getTimeOfOpening());
+                                            statement.setTime(3, time);
+                                            statement.setObject(4, measure);
+                                            statement.execute();
+                                        }
+                                        PreparedStatement statement = outroBanco.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)");
                                         statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
                                         statement.setDate(2, sqlDate);
                                         Time time = new Time(UsefulMethods.getTimeOfOpening());
                                         statement.setTime(3, time);
                                         statement.setObject(4, measure);
                                         statement.execute();
-                                        statement.close();
+
                                         dayIsAlreadyStored = true;
                                     }
                                 } catch (SQLException ex) {
@@ -215,7 +223,7 @@ public class MeasurerPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel2)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(446, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -270,17 +278,17 @@ public class MeasurerPanel extends javax.swing.JPanel {
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(31, 31, 31))
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel1)
                     .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(totalSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
-                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(365, Short.MAX_VALUE))
+                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -308,8 +316,9 @@ public class MeasurerPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private DefaultCategoryDataset createDataset() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    private XYDataset createDataset() {
+        TimeSeriesCollection dataset = new TimeSeriesCollection();
+        TimeSeries spent = new TimeSeries("Consumo atual");
 
         if (stored != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -324,106 +333,95 @@ public class MeasurerPanel extends javax.swing.JPanel {
 
             String storedAxis = "Consumo " + prefix + new SimpleDateFormat("EEEE").format(storedSqlDate).toLowerCase()
                     + " - Dia " + sdf.format(storedSqlDate);
-            int i = 0;
-            for (Double d : stored) {
-                //16:54:18
-                String s = storedSqlTime.toString();
-                if (i < 10) {
-                    s = s.substring(0, 4) + i + ":00";
-                } else {
-                    s = s.substring(0, 3) + i + ":00";
-                }
-                dataset.addValue(d, storedAxis, s);
-                i++;
-            }
+            TimeSeries strd = new TimeSeries(storedAxis);
+            minute = new Minute(); // a week
+
+            stored.stream().map((d) -> {
+                strd.add(minute, d);
+                return d;
+            }).forEach((_item) -> {
+                minute = (Minute) minute.next();
+            });
+
+            dataset.addSeries(strd);
         }
 
-        if (measure != null && measure.size() > 0) {
-            //16:01:37
-            int i = 0;
-            for (Double d : measure) {
-                String s = sqlTime.toString();
-                if (i < 10) {
-                    s = s.substring(0, 4) + i + ":00";
-                } else {
-                    s = s.substring(0, 3) + i + ":00";
-                }
-                dataset.addValue(d, "Consumo atual", s);
-                i++;
-            }
+        minute = new Minute();
+        spent.add(minute, 0.0);
+        minute = (Minute) minute.next();
+
+        if (measure.size() > 0) {
+            measure.stream().map((d) -> {
+                spent.add(minute, d);
+                return d;
+            }).forEach((_item) -> {
+                minute = (Minute) minute.next();
+            });
         }
 
+        dataset.addSeries(spent);
         return dataset;
     }
 
     private void createChart() {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Calendar cal = Calendar.getInstance();
-                    cal.add(Calendar.DATE, -7);
-                    String last = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-                    ResultSet check = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
-                            + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
+        try {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, -7);
+            String last = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
+            ResultSet check = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
+                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
 
-                    if (check.next()) {
-                        stored = readGastosArrayOfLastDOTW();
-                        check.close();
-                    }
-                } catch (SQLException ex) {
-                    Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                chart = ChartFactory.createLineChart(null, "Horas", "Consumo em kWh", createDataset());
-
-                chart.setBackgroundPaint(Color.BLACK);
-                //new Color(255, 200, 20)
-
-                ValueAxis values = chart.getCategoryPlot().getRangeAxis();
-                values.setLabelPaint(Color.WHITE);
-                values.setTickMarkPaint(Color.WHITE);
-                values.setTickLabelPaint(Color.WHITE);
-
-                CategoryAxis range = chart.getCategoryPlot().getDomainAxis();
-                range.setLabelPaint(Color.WHITE);
-                range.setTickMarkPaint(Color.WHITE);
-                range.setTickLabelPaint(Color.WHITE);
-
-                ChartPanel panel = new ChartPanel(chart);
-                panel.setMouseWheelEnabled(true);
-                jPanel1.add(panel);
-                jPanel1.revalidate();
+            if (check.next()) {
+                stored = readGastosArrayOfLastDOTW();
+                check.close();
             }
-        }.start();
+        } catch (SQLException ex) {
+            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        chart = ChartFactory.createTimeSeriesChart(null, "Horas", "Consumo em kWh", createDataset());
+
+        chart.setBackgroundPaint(Color.BLACK);
+        //new Color(255, 200, 20)
+        ValueAxis values = chart.getXYPlot().getRangeAxis();
+        values.setLabelPaint(Color.WHITE);
+        values.setTickMarkPaint(Color.WHITE);
+        values.setTickLabelPaint(Color.WHITE);
+
+        ValueAxis range = chart.getXYPlot().getDomainAxis();
+        range.setLabelPaint(Color.WHITE);
+        range.setTickMarkPaint(Color.WHITE);
+        range.setTickLabelPaint(Color.WHITE);
+
+        ChartPanel panel = new ChartPanel(chart);
+        panel.setMouseWheelEnabled(true);
+        jPanel1.add(panel);
+        jPanel1.revalidate();
     }
 
     private void updateChart(double spent) {
-        DefaultCategoryDataset dataset = (DefaultCategoryDataset) chart.getCategoryPlot().getDataset();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        String now = sdf.format(Calendar.getInstance().getTime());
-        dataset.addValue(spent, "Consumo atual", now);
+        TimeSeriesCollection dataset = (TimeSeriesCollection) chart.getXYPlot().getDataset();
+        minute = (Minute) minute.next();
+        dataset.getSeries("Consumo atual").add(minute, spent);
     }
 
     private ArrayList<Double> readGastosArrayOfToday() {
         try {
             Calendar cal = Calendar.getInstance();
             String today = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + today
-                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
-            rs.next();
-
-            sqlDate = rs.getDate("data");
-            sqlTime = rs.getTime("hora_inicio");
-
-            Blob blob = rs.getBlob("consumo_array");
-            byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
-            blob.free();
-
-            ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
-            ArrayList<Double> array = (ArrayList<Double>) is.readObject();
-
-            rs.close();
+            ObjectInputStream is;
+            ArrayList<Double> array;
+            try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + today
+                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
+                rs.next();
+                sqlDate = rs.getDate("data");
+                sqlTime = rs.getTime("hora_inicio");
+                Blob blob = rs.getBlob("consumo_array");
+                byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
+                blob.free();
+                is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
+                array = (ArrayList<Double>) is.readObject();
+            }
             is.close();
 
             return array;
@@ -438,21 +436,19 @@ public class MeasurerPanel extends javax.swing.JPanel {
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, -7);
             String last = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
-                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
-            rs.next();
-
-            storedSqlDate = rs.getDate("data");
-            storedSqlTime = rs.getTime("hora_inicio");
-
-            Blob blob = rs.getBlob("consumo_array");
-            byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
-            blob.free();
-
-            ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
-            ArrayList<Double> array = (ArrayList<Double>) is.readObject();
-
-            rs.close();
+            ObjectInputStream is;
+            ArrayList<Double> array;
+            try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
+                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
+                rs.next();
+                storedSqlDate = rs.getDate("data");
+                storedSqlTime = rs.getTime("hora_inicio");
+                Blob blob = rs.getBlob("consumo_array");
+                byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
+                blob.free();
+                is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
+                array = (ArrayList<Double>) is.readObject();
+            }
             is.close();
             return array;
         } catch (SQLException | IOException | ClassNotFoundException ex) {
