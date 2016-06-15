@@ -17,7 +17,6 @@
 package com.watterizer.panels.main;
 
 import com.watterizer.util.UsefulMethods;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,15 +35,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -123,15 +118,13 @@ public class MeasurerPanel extends javax.swing.JPanel {
                         spentAverage = 0;
                     }
 
-                    if (seconds % 60 == 0) { // 10 min
-                        System.out.println("salvar no banco");
+                    if (seconds % 60 == 0) { // 1 min
                         seconds = 0;
 
                         new Thread("Updating Spent on DB") {
                             @Override
                             public void run() {
                                 try {
-                                    Connection outroBanco = DriverManager.getConnection("jdbc:mysql://sql5.freemysqlhosting.net/sql5123660", "sql5123660", "1aQQ3qMwbt");
                                     if (dayIsAlreadyStored) {
                                         try (PreparedStatement prepared = conn.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?")) {
                                             prepared.setObject(1, measure);
@@ -139,11 +132,6 @@ public class MeasurerPanel extends javax.swing.JPanel {
                                             prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
                                             prepared.execute();
                                         }
-                                        PreparedStatement prepared = outroBanco.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?");
-                                        prepared.setObject(1, measure);
-                                        prepared.setDate(2, sqlDate);
-                                        prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
-                                        prepared.execute();
                                     } else {
                                         try (PreparedStatement statement = conn.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)")) {
                                             statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
@@ -153,14 +141,6 @@ public class MeasurerPanel extends javax.swing.JPanel {
                                             statement.setObject(4, measure);
                                             statement.execute();
                                         }
-                                        PreparedStatement statement = outroBanco.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)");
-                                        statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
-                                        statement.setDate(2, sqlDate);
-                                        Time time = new Time(UsefulMethods.getTimeOfOpening());
-                                        statement.setTime(3, time);
-                                        statement.setObject(4, measure);
-                                        statement.execute();
-
                                         dayIsAlreadyStored = true;
                                     }
                                 } catch (SQLException ex) {
@@ -335,7 +315,9 @@ public class MeasurerPanel extends javax.swing.JPanel {
                     + " - Dia " + sdf.format(storedSqlDate);
             TimeSeries strd = new TimeSeries(storedAxis);
             minute = new Minute(); // a week
-
+            strd.add(minute, 0.0);
+            minute = (Minute) minute.next();
+            
             stored.stream().map((d) -> {
                 strd.add(minute, d);
                 return d;

@@ -110,6 +110,7 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         jSeparator2.setBackground(new java.awt.Color(255, 200, 20));
         jSeparator2.setForeground(new java.awt.Color(255, 200, 20));
+        jSeparator2.setPreferredSize(new java.awt.Dimension(0, 3));
 
         jLabel6.setFont(new java.awt.Font("Microsoft YaHei", 0, 36)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
@@ -146,7 +147,7 @@ public class LoginJFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jSeparator2)
+            .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 133, Short.MAX_VALUE)

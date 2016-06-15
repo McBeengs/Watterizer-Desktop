@@ -2,14 +2,10 @@ package com.watterizer.panels;
 
 import com.watterizer.panels.login.LoginJFrame;
 import com.watterizer.style.RoundedCornerBorder;
-import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.URL;
-import java.sql.Connection;
 import java.util.Locale;
-import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
 public class SplashScreen extends javax.swing.JFrame {
@@ -27,18 +23,15 @@ public class SplashScreen extends javax.swing.JFrame {
             
         }
 
-        fadeInSplash(2000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Checar arquivo de configurações para identificar servidor local ou remoto.
-                // Caso seja remoto:
-                new Thread() {
-                    @Override
-                    public void run() {
-                        executeTests();
-                    }
-                }.start();
-            }
+        fadeInSplash(2000, (ActionEvent e) -> {
+            // Checar arquivo de configurações para identificar servidor local ou remoto.
+            // Caso seja remoto:
+            new Thread() {
+                @Override
+                public void run() {
+                    executeTests();
+                }
+            }.start();
         });
         repaint();
     }
@@ -125,12 +118,9 @@ public class SplashScreen extends javax.swing.JFrame {
         try {
             checkInternetConn();
 
-            fadeOutSplash(1000, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    new LoginJFrame().setVisible(true);
-                    dispose();
-                }
+            fadeOutSplash(1000, (ActionEvent e) -> {
+                new LoginJFrame().setVisible(true);
+                dispose();
             });
 
         } catch (Exception ex) {
@@ -138,52 +128,40 @@ public class SplashScreen extends javax.swing.JFrame {
                 case "Internet":
                     GenericErrorJFrame internet = new GenericErrorJFrame("Falha com a Internet", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
-                    internet.setRightButtonAction(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            internet.disposeWindow();
-                            dispose();
-                        }
-                    });
+                    internet.setRightButtonAction((ActionEvent e) -> {
+                        internet.disposeWindow();
+                        dispose();
+            });
 
-                    internet.setRetryButtonAction(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    executeTests();
-                                }
-                            }.start();
-                            internet.disposeWindow();
-                        }
-                    });
+                    internet.setRetryButtonAction((ActionEvent e) -> {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                executeTests();
+                            }
+                        }.start();
+                        internet.disposeWindow();
+            });
 
                     internet.setVisible(true);
                     break;
                 case "DB":
                     GenericErrorJFrame db = new GenericErrorJFrame("Falha com a Internet", GenericErrorJFrame.ALERT_MESSAGE, errorDetail, GenericErrorJFrame.OK_RETRY);
 
-                    db.setRightButtonAction(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            db.disposeWindow();
-                            dispose();
-                        }
-                    });
+                    db.setRightButtonAction((ActionEvent e) -> {
+                        db.disposeWindow();
+                        dispose();
+            });
 
-                    db.setRetryButtonAction(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    executeTests();
-                                }
-                            }.start();
-                            db.disposeWindow();
-                        }
-                    });
+                    db.setRetryButtonAction((ActionEvent e) -> {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                executeTests();
+                            }
+                        }.start();
+                        db.disposeWindow();
+            });
 
                     db.setVisible(true);
                     break;
@@ -257,7 +235,7 @@ public class SplashScreen extends javax.swing.JFrame {
         Locale.setDefault(new Locale("pt", "BR"));
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Windows".equals(info.getName())) {
+                if ("Metal".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
