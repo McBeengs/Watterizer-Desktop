@@ -20,7 +20,7 @@ public class SplashScreen extends javax.swing.JFrame {
             setUndecorated(true);
             initComponents();
             getContentPane().setVisible(false);
-            
+
         }
 
         fadeInSplash(2000, (ActionEvent e) -> {
@@ -131,7 +131,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     internet.setRightButtonAction((ActionEvent e) -> {
                         internet.disposeWindow();
                         dispose();
-            });
+                    });
 
                     internet.setRetryButtonAction((ActionEvent e) -> {
                         new Thread() {
@@ -141,7 +141,7 @@ public class SplashScreen extends javax.swing.JFrame {
                             }
                         }.start();
                         internet.disposeWindow();
-            });
+                    });
 
                     internet.setVisible(true);
                     break;
@@ -151,7 +151,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     db.setRightButtonAction((ActionEvent e) -> {
                         db.disposeWindow();
                         dispose();
-            });
+                    });
 
                     db.setRetryButtonAction((ActionEvent e) -> {
                         new Thread() {
@@ -161,7 +161,7 @@ public class SplashScreen extends javax.swing.JFrame {
                             }
                         }.start();
                         db.disposeWindow();
-            });
+                    });
 
                     db.setVisible(true);
                     break;
@@ -243,7 +243,7 @@ public class SplashScreen extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(SplashScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        
+
         java.awt.EventQueue.invokeLater(() -> {
             new SplashScreen().setVisible(true);
         });

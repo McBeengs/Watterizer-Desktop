@@ -1,6 +1,8 @@
 package com.watterizer.panels.options;
 
+import com.watterizer.style.StylizedJButton;
 import com.watterizer.xml.XmlManager;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,6 +32,8 @@ public class OptionsJFrame extends javax.swing.JFrame {
 
         //originalContent = xml.toString();
         initComponents();
+        getContentPane().setBackground(Color.black);
+        setTitle("Configurações - Watterizer");
         setTree();
 
         mainContainer.setLayout(new GridBagLayout());
@@ -89,9 +93,8 @@ public class OptionsJFrame extends javax.swing.JFrame {
     }
 
     private void setTree() {
-        //this.setTitle(language.getContentById("options"));
         hierarchy = new DefaultMutableTreeNode("root");
-        DefaultMutableTreeNode section1 = new DefaultMutableTreeNode("");
+        DefaultMutableTreeNode section1 = new DefaultMutableTreeNode("Configurações Gerais");
         hierarchy.add(section1);
         
         String[] section1Ops = new String[2];
@@ -131,8 +134,8 @@ public class OptionsJFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        cancelButton = new javax.swing.JButton();
-        saveButton = new javax.swing.JButton();
+        cancelButton = new StylizedJButton();
+        saveButton = new StylizedJButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         optionsTree = new javax.swing.JTree();
         mainContainer = new javax.swing.JPanel();
@@ -141,7 +144,9 @@ public class OptionsJFrame extends javax.swing.JFrame {
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
 
+        cancelButton.setBackground(new java.awt.Color(255, 200, 20));
         cancelButton.setText("Cancelar");
+        cancelButton.setBorderPainted(false);
         cancelButton.setFocusable(false);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -149,7 +154,9 @@ public class OptionsJFrame extends javax.swing.JFrame {
             }
         });
 
+        saveButton.setBackground(new java.awt.Color(255, 200, 20));
         saveButton.setText("Ok");
+        saveButton.setBorderPainted(false);
         saveButton.setFocusPainted(false);
         saveButton.setFocusable(false);
         saveButton.addActionListener(new java.awt.event.ActionListener() {
@@ -158,6 +165,7 @@ public class OptionsJFrame extends javax.swing.JFrame {
             }
         });
 
+        optionsTree.setBackground(new java.awt.Color(240, 240, 240));
         javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
         optionsTree.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
         optionsTree.setRootVisible(false);
@@ -184,13 +192,13 @@ public class OptionsJFrame extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -198,12 +206,12 @@ public class OptionsJFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
-                    .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(saveButton))
-                .addContainerGap())
+                    .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(saveButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
+                .addGap(7, 7, 7))
         );
 
         cancelButton.setFocusPainted(false);
@@ -254,7 +262,7 @@ public class OptionsJFrame extends javax.swing.JFrame {
                 boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
             super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
+            
             setOpenIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/openArrow.png")));
             setClosedIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/closedArrow.png")));
             setLeafIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/mainBullet.png")));
