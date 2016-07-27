@@ -21,13 +21,13 @@ public class Watterizer {
 
         System.out.println("Waiting connection...");
 
-        if (arduinoBridge.waitForConnection(20000)) {
+        if (arduinoBridge.waitForConnection(5000)) {
             System.out.println("Sucsess");
             System.err.println("Start reading lines from console...");
             System.err.println("-------------");
             
             arduinoBridge.addDisconnectHandler((CommPortIdentifier id) -> {
-                System.out.println("fudeu");
+                System.out.println("ops");
             });
             
             arduinoBridge.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {

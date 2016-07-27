@@ -16,8 +16,11 @@
  */
 package com.watterizer.panels.main;
 
+import aurelienribon.slidinglayout.SLPanel;
 import com.watterizer.crypto.Encrypter;
 import com.watterizer.style.RoundedCornerBorder;
+import com.watterizer.animation.ScaleAnimator;
+import com.watterizer.animation.ScallableComponent;
 import com.watterizer.util.UsefulMethods;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
@@ -38,16 +41,17 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class UserPanel extends javax.swing.JPanel {
+public class UserPanel extends SLPanel {
 
     private Connection db;
-    private GridBagConstraints gbc;
     private ArrayList<String> perguntas;
+    private ScaleAnimator iconAnimator;
     private ImageIcon icon;
     @SuppressWarnings("FieldMayBeFinal")
     private String pergunta;
@@ -56,7 +60,8 @@ public class UserPanel extends javax.swing.JPanel {
     @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
     public UserPanel() {
         initComponents();
-
+        
+        iconAnimator = new ScaleAnimator(iconDisplayer, 185, 185, 100);
         db = UsefulMethods.getDBInstance();
         try {
             ResultSet rs = db.createStatement().executeQuery("SELECT * FROM perguntasecreta WHERE id = "
@@ -71,10 +76,10 @@ public class UserPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
-                    Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
-                    icon = new ImageIcon(url);
-                    //icon = new ImageIcon(new URL("https://66.media.tumblr.com/1108e527b5ed8cc70879517343fae063/tumblr_inline_o60l4rkLr71rqzcqm_500.gif"));
+                    //URL url = new URL("http://10.0.3.230:8080/Watterizer/img/imagensPerfil/fotoid" + UsefulMethods.getCurrentUserModel().getId() + ".png".trim());
+                    //Image image = new ImageIcon(url).getImage().getScaledInstance(240, 240, Image.SCALE_SMOOTH);
+                    //icon = new ImageIcon(url);
+                    icon = new ImageIcon(new URL("https://66.media.tumblr.com/1108e527b5ed8cc70879517343fae063/tumblr_inline_o60l4rkLr71rqzcqm_500.gif"));
                 } catch (Exception ex) {
                     icon = new ImageIcon(getClass().getResource("/com/watterizer/style/images/errorScreen.png"));
                 }
@@ -328,6 +333,15 @@ public class UserPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_editButtonMouseClicked
 
+    public void beginAnimations() {
+        iconDisplayer.setVisible(true);
+        iconAnimator.beginAnimation();
+    }
+    
+    public void resetAnimations() {
+        iconDisplayer.setOpaque(false);
+    }
+    
     private void rightClickEvent() {
         JFileChooser chooser = new JFileChooser(System.getProperty("user.home"));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -376,4 +390,15 @@ public class UserPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JSeparator jSeparator2;
     // End of variables declaration//GEN-END:variables
+
+    private class ScallableJLabel extends JLabel implements ScallableComponent<JLabel> {
+
+        private double scale = 1.0d;
+        
+        @Override
+        public void setScale(double scale) {
+            this.scale = scale;
+        }
+        
+    }
 }

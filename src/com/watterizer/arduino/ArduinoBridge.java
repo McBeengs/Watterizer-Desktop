@@ -13,7 +13,6 @@ import gnu.io.UnsupportedCommOperationException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import static java.lang.Thread.sleep;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.TooManyListenersException;
@@ -93,7 +92,6 @@ public class ArduinoBridge {
                                         spe.getNewValue(), spe.getOldValue()));
                             }
                         } else {
-                            System.out.println("deu ruim");
                             disconnectHandlers.stream().forEach((handler) -> {
                                 handler.onDisconnect(portId);
                             });
@@ -102,7 +100,7 @@ public class ArduinoBridge {
                         Logger.getLogger(ArduinoBridge.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
-                    System.err.println("oi");
+                    //do something
                 }
             });
         }

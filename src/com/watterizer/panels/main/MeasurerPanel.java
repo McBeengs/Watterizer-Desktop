@@ -16,6 +16,7 @@
  */
 package com.watterizer.panels.main;
 
+import aurelienribon.slidinglayout.SLPanel;
 import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,7 +46,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 
-public class MeasurerPanel extends javax.swing.JPanel {
+public class MeasurerPanel extends SLPanel {
 
     private JFreeChart chart;
     private Minute minute;

@@ -23,10 +23,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -120,7 +121,6 @@ public class XmlManager {
      */
     public void createFile(String path) throws IOException {
         filePath = path;
-
         content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n\n</root>";
     }
 
@@ -652,8 +652,7 @@ public class XmlManager {
         }
 
         newXml.createNewFile();
-        PrintWriter writer = new PrintWriter(newXml);
-        writer.print(content);
+        FileUtils.writeStringToFile(newXml, content,Charset.defaultCharset());
     }
 
     /**

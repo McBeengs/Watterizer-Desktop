@@ -16,6 +16,7 @@
  */
 package com.watterizer.util;
 
+import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -46,6 +47,7 @@ public class UsefulMethods {
 
     public static final int OPTIONS = 0;
     public static final int LANGUAGE = 1;
+    public static double CURRENT_KWH_CHARGE;
     private static final long TIME_OF_OPENING = System.currentTimeMillis();
     private static XmlManager options;
     private static XmlManager language;
@@ -74,9 +76,35 @@ public class UsefulMethods {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<root>\n"
                 + "  <gui>\n"
-                + "    <language attr=\"0\">English</language>\n"
+                + "    <language attr=\"0\">Português</language>\n"
                 + "    <style attr=\"0\">Metal</style>\n"
+                + "    <databaseName>db</databaseName>\n"
+                + "    <databaseUrl>jdbc:mysql://localhost/db</databaseUrl>\n"
+                + "    <databaseUser>root</databaseUser>\n"
+                + "    <databasePass></databasePass>\n"
+                + "    <autoLogin>false</autoLogin>\n"
+                + "    <user></user>\n"
+                + "    <pass></pass>\n"
                 + "  </gui>\n"
+                + "  <arduino>\n"
+                + "    <board>Uno</board>\n"
+                + "    <integer id=\"components\">2</integer>\n"
+                + "    <integer id=\"com1\">0</integer>\n"
+                + "    <integer id=\"com2\">0</integer>\n"
+                + "    <integer id=\"com3\">0</integer>\n"
+                + "    <integer id=\"com4\">0</integer>\n"
+                + "    <integer id=\"com5\">0</integer>\n"
+                + "    <integer id=\"com6\">0</integer>\n"
+                + "    <integer id=\"com7\">0</integer>\n"
+                + "    <integer id=\"com8\">0</integer>\n"
+                + "    <integer id=\"com9\">0</integer>\n"
+                + "    <integer id=\"com10\">0</integer>\n"
+                + "    <integer id=\"com11\">0</integer>\n"
+                + "    <integer id=\"com12\">0</integer>\n"
+                + "    <integer id=\"com13\">0</integer>\n"
+                + "    <integer id=\"com14\">0</integer>\n"
+                + "    <integer id=\"com15\">0</integer>\n"
+                + "  </arduino>\n"
                 + "</root>\n"
                 + "";
     }
@@ -85,31 +113,25 @@ public class UsefulMethods {
         try {
             String path = cls.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
-            if (decodedPath.contains("/")) {
-                decodedPath = decodedPath.substring(0, decodedPath.lastIndexOf("/")) + "/";
-            } else {
-                decodedPath = decodedPath.substring(0, decodedPath.lastIndexOf("\\")) + "\\";
-            }
-
-            return decodedPath;
+            return decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
-    
+
     public static UserModel getCurrentUserModel() {
         return model;
     }
-    
+
     public static void setCurrentUserModel(UserModel model) {
         UsefulMethods.model = model;
     }
-    
+
     public static void saveCurrentUserModel() {
         Connection db = getDBInstance();
         try {
-            PreparedStatement statement =  db.prepareStatement("UPDATE usuario SET nome = ?, username = ?, email = ?, senha = ?, telefone = ?, id_pergunta = ?, resposta_pergunta = ? WHERE id = ?");
+            PreparedStatement statement = db.prepareStatement("UPDATE usuario SET nome = ?, username = ?, email = ?, senha = ?, telefone = ?, id_pergunta = ?, resposta_pergunta = ? WHERE id = ?");
             statement.setString(1, getCurrentUserModel().getNome());
             statement.setString(2, getCurrentUserModel().getUsername());
             statement.setString(3, getCurrentUserModel().getEmail());
@@ -118,7 +140,7 @@ public class UsefulMethods {
             statement.setInt(6, getCurrentUserModel().getIdPergunta());
             statement.setString(7, getCurrentUserModel().getRespostaPergunta());
             statement.setInt(8, getCurrentUserModel().getId());
-            
+
             statement.execute();
         } catch (SQLException ex) {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
@@ -128,23 +150,19 @@ public class UsefulMethods {
     public static XmlManager getManagerInstance(int manager) {
         if (manager == OPTIONS && options != null) {
             return options;
-        }
-
-        if (manager == LANGUAGE && language != null) {
+        } else if (manager == LANGUAGE && language != null) {
             return language;
         }
 
-        UsefulMethods um = new UsefulMethods();
         options = new XmlManager();
-        String separator = System.getProperty("file.separator");
         boolean checkOS = false;
 
-        File getConfig = new File(UsefulMethods.getClassPath(um.getClass()) + separator + "config");
+        File getConfig = new File(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "config");
         if (!getConfig.exists()) {
             getConfig.mkdir();
         }
 
-        File getOptions = new File(UsefulMethods.getClassPath(um.getClass()) + "config" + separator + "options.xml");
+        File getOptions = new File(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
         if (!getOptions.exists()) {
             String content = UsefulMethods.getOptions();
 
@@ -153,15 +171,16 @@ public class UsefulMethods {
                     getOptions.createNewFile();
                     PrintWriter writer = new PrintWriter(getOptions);
                     writer.print(content);
+                    writer.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(um.getClass().getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
                 checkOS = true;
             }
         }
 
-        options.loadFile(UsefulMethods.getClassPath(um.getClass()) + "config" + separator + "options.xml");
+        options.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
         switch (manager) {
             case OPTIONS:
                 return options;
@@ -169,14 +188,23 @@ public class UsefulMethods {
                 if (!checkOS) {
                     language = new XmlManager();
                     String temp = options.getContentByName("language", 0);
-                    temp = temp.substring(0, temp.indexOf(","));
-                    language.loadFile(UsefulMethods.getClassPath(um.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
+                    language.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "language"
+                            + File.separator + temp.toLowerCase() + ".xml");
 
                     return language;
                 }
         }
 
         return null;
+    }
+
+    public static ArduinoBridge getArduinoInstance() throws IOException {
+        ArduinoBridge bridge = new ArduinoBridge();
+        if (bridge.waitForConnection(5000)) {
+            return bridge;
+        } else {
+            throw new IOException("Somehow the Arduino connection has fallen.");
+        }
     }
 
     public static void updateManagersInstances() {

@@ -16,6 +16,7 @@
  */
 package com.watterizer.panels.main;
 
+import aurelienribon.slidinglayout.SLPanel;
 import com.watterizer.crypto.Encrypter;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
@@ -42,7 +43,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class RankingPanel extends javax.swing.JPanel {
+public class RankingPanel extends SLPanel {
 
     @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
     public RankingPanel() {

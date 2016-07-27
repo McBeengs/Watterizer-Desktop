@@ -16,6 +16,7 @@
  */
 package com.watterizer.panels.main;
 
+import aurelienribon.slidinglayout.SLPanel;
 import com.watterizer.panels.options.OptionsJFrame;
 import java.awt.AWTException;
 import java.awt.Color;
@@ -124,13 +125,13 @@ public class MainJFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        leftBigButton = new javax.swing.JPanel();
+        leftBigButton = new SLPanel();
         textLeftBigButton = new javax.swing.JLabel();
         iconLeftBigButton = new javax.swing.JLabel();
-        rightBigButton = new javax.swing.JPanel();
+        rightBigButton = new SLPanel();
         textRightBigButton = new javax.swing.JLabel();
         iconRightBigButton = new javax.swing.JLabel();
-        mainPanel = new javax.swing.JPanel();
+        mainPanel = new SLPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenu2 = new javax.swing.JMenu();
@@ -442,6 +443,7 @@ public class MainJFrame extends javax.swing.JFrame {
         mainPanel.revalidate();
     }
 
+    /*
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel iconLeftBigButton;
     private javax.swing.JLabel iconRightBigButton;
@@ -455,5 +457,17 @@ public class MainJFrame extends javax.swing.JFrame {
     private javax.swing.JLabel textLeftBigButton;
     private javax.swing.JLabel textRightBigButton;
     // End of variables declaration//GEN-END:variables
-
+    */
+    private javax.swing.JLabel iconLeftBigButton;
+    private javax.swing.JLabel iconRightBigButton;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private SLPanel leftBigButton;
+    private SLPanel mainPanel;
+    private javax.swing.JMenuItem optionsItem;
+    private SLPanel rightBigButton;
+    private javax.swing.JLabel textLeftBigButton;
+    private javax.swing.JLabel textRightBigButton;
+    
 }

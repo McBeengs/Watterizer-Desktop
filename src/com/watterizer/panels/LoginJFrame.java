@@ -1,26 +1,47 @@
-package com.watterizer.panels.login;
+package com.watterizer.panels;
 
 import com.watterizer.crypto.Encrypter;
-import com.watterizer.panels.main.MainJFrame;
+import com.watterizer.panels.main.JFrame;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.util.UserModel;
+import com.watterizer.xml.XmlManager;
 import java.awt.Color;
-import java.awt.Cursor;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class LoginJFrame extends javax.swing.JFrame {
 
+    private final XmlManager xml;
+    private final XmlManager language;
+
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public LoginJFrame() {
+        xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
+        language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
         initComponents();
+        setVisible(false);
         setTitle("Login | Watterizer");
         getContentPane().setBackground(Color.BLACK);
+
+        if (Boolean.parseBoolean(xml.getContentByName("autoLogin", 0))) {
+            userInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("user", 0)));
+            passInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("pass", 0)));
+            if (JOptionPane.showConfirmDialog(rootPane, "Logar-se como \"" +userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
+                if (checkInput()) {
+                    checkDB();
+                } else {
+                    setVisible(true);
+                }
+            } else {
+                setVisible(true);
+            }
+        } else {
+            setVisible(true);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -31,7 +52,6 @@ public class LoginJFrame extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         passInput = new javax.swing.JPasswordField();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         jCheckBox1 = new javax.swing.JCheckBox();
         errorLog = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
@@ -52,7 +72,7 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel2.setText("Username");
+        jLabel2.setText(language.getContentById("username"));
 
         passInput.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -62,27 +82,16 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel3.setText("Password");
-
-        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/lilCog.png"))); // NOI18N
-        jLabel4.setText("Configurações Administrativas");
-        jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel4MouseClicked(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                jLabel4MouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                jLabel4MouseExited(evt);
-            }
-        });
+        jLabel3.setText(language.getContentById("password"));
 
         jCheckBox1.setBackground(new java.awt.Color(0, 0, 0));
         jCheckBox1.setForeground(new java.awt.Color(255, 255, 255));
-        jCheckBox1.setText("Permanecer logado");
+        jCheckBox1.setText(language.getContentById("keepLogin"));
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
 
         errorLog.setBackground(new java.awt.Color(0, 0, 0));
         errorLog.setForeground(new java.awt.Color(255, 51, 51));
@@ -150,21 +159,20 @@ public class LoginJFrame extends javax.swing.JFrame {
             .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addGap(0, 133, Short.MAX_VALUE)
+                .addGap(0, 117, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jCheckBox1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 70, Short.MAX_VALUE))
+                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(passInput)
                             .addComponent(userInput, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addContainerGap(126, Short.MAX_VALUE))
             .addComponent(errorLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -188,10 +196,10 @@ public class LoginJFrame extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(11, 11, 11)
                 .addComponent(errorLog, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel4)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(38, Short.MAX_VALUE))
         );
+
+        jCheckBox1.setSelected(Boolean.parseBoolean(xml.getContentByName("autoLogin", 0)));
 
         pack();
         setLocationRelativeTo(null);
@@ -206,12 +214,15 @@ public class LoginJFrame extends javax.swing.JFrame {
         new Thread() {
             @Override
             public void run() {
-                try {
-                    if (checkInput()) {
-                        checkDB();
+                if (checkInput()) {
+                    if (Boolean.parseBoolean(xml.getContentByName("autoLogin", 0))) {
+                        xml.setContentByName("user", 0, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, userInput.getText()));
+                        xml.setContentByName("pass", 0, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, new String(passInput.getPassword())));
+                    } else {
+                        xml.setContentByName("user", 0, "");
+                        xml.setContentByName("pass", 0, "");
                     }
-                } catch (SQLException ex) {
-                    Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    checkDB();
                 }
             }
 
@@ -225,7 +236,9 @@ public class LoginJFrame extends javax.swing.JFrame {
             passInput.setEnabled(false);
             jCheckBox1.setEnabled(false);
             jButton1.setEnabled(false);
-            checkInput();
+            if (checkInput()) {
+                checkDB();
+            }
         }
     }//GEN-LAST:event_userInputKeyPressed
 
@@ -236,21 +249,19 @@ public class LoginJFrame extends javax.swing.JFrame {
             passInput.setEnabled(false);
             jCheckBox1.setEnabled(false);
             jButton1.setEnabled(false);
-            checkInput();
+            if (checkInput()) {
+                checkDB();
+            }
         }
     }//GEN-LAST:event_passInputKeyPressed
 
-    private void jLabel4MouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseEntered
-        setCursor(new Cursor(Cursor.HAND_CURSOR));
-    }//GEN-LAST:event_jLabel4MouseEntered
-
-    private void jLabel4MouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseExited
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-    }//GEN-LAST:event_jLabel4MouseExited
-
-    private void jLabel4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseClicked
-        JOptionPane.showMessageDialog(null, "Essa opção ainda não está pronta", "Ops", JOptionPane.INFORMATION_MESSAGE);
-    }//GEN-LAST:event_jLabel4MouseClicked
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        if (jCheckBox1.isSelected()) {
+            xml.setContentByName("autoLogin", 0, "true");
+        } else {
+            xml.setContentByName("autoLogin", 0, "false");
+        }
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
 
     private boolean checkInput() {
         if (userInput.getText().length() == 0 || passInput.getPassword().length == 0) {
@@ -262,7 +273,6 @@ public class LoginJFrame extends javax.swing.JFrame {
                 passInput.setEnabled(true);
                 jCheckBox1.setEnabled(true);
                 jButton1.setEnabled(true);
-                return false;
             } else if (userInput.getText().length() <= 0) {
                 errorLog.setText("Username vazio");
                 paintInput(0, 1);
@@ -270,7 +280,6 @@ public class LoginJFrame extends javax.swing.JFrame {
                 passInput.setEnabled(true);
                 jCheckBox1.setEnabled(true);
                 jButton1.setEnabled(true);
-                return false;
             } else if (passInput.getPassword().length <= 0) {
                 errorLog.setText("Password vazio");
                 paintInput(1, 1);
@@ -278,23 +287,10 @@ public class LoginJFrame extends javax.swing.JFrame {
                 passInput.setEnabled(true);
                 jCheckBox1.setEnabled(true);
                 jButton1.setEnabled(true);
-                return false;
             }
-        } else {
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        checkDB();
-                    } catch (SQLException ex) {
-                        Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }.start();
-            return true;
+            return false;
         }
-
-        return false;
+        return true;
     }
 
     private void paintInput(int input, int color) {
@@ -321,58 +317,68 @@ public class LoginJFrame extends javax.swing.JFrame {
         }
     }
 
-    private void checkDB() throws SQLException {
-        Connection conn = UsefulMethods.getDBInstance();
-        PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ?");
-        statement.setString(1, userInput.getText());
+    private void checkDB() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Connection conn = UsefulMethods.getDBInstance();
+                    PreparedStatement statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ?");
+                    statement.setString(1, userInput.getText());
 
-        ResultSet result = statement.executeQuery();
-        if (result.next()) { // o usuário existe no banco, mas a senha não necessariamente está correta
-            statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
-            statement.setString(1, userInput.getText());
+                    ResultSet result = statement.executeQuery();
+                    if (result.next()) { // o usuário existe no banco, mas a senha não necessariamente está correta
+                        statement = conn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ?");
+                        statement.setString(1, userInput.getText());
 
-            String getPass = "";
-            char[] array = passInput.getPassword();
-            for (int i = 0; i < array.length; i++) {
-                getPass += array[i];
+                        String getPass = "";
+                        char[] array = passInput.getPassword();
+                        for (int i = 0; i < array.length; i++) {
+                            getPass += array[i];
+                        }
+                        statement.setString(2, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, getPass));
+
+                        result = statement.executeQuery();
+                        if (result.next()) { // a senha está correta
+                            UserModel model = new UserModel();
+                            model.setId(result.getInt("id"));
+                            model.setNome(result.getString("nome"));
+                            model.setUsername(result.getString("username"));
+                            model.setEmail(result.getString("email"));
+                            model.setSenha(result.getString("senha"));
+                            model.setTelefone(result.getString("telefone"));
+                            model.setDataCadastro(result.getDate("data_cadastro"));
+                            model.setHoraInicioExpediente(result.getTime("hora_inicio_expediente"));
+                            model.setHoraFimExpediente(result.getTime("hora_fim_expediente"));
+                            model.setHoraAlmoco(result.getTime("hora_almoco"));
+                            model.setIdPergunta(result.getInt("id_pergunta"));
+                            model.setRespostaPergunta(result.getString("resposta_pergunta"));
+                            model.setIdSetor(result.getInt("id_setor"));
+                            model.setIdPerfil(result.getInt("id_perfil"));
+                            UsefulMethods.setCurrentUserModel(model);
+                            xml.saveXml();
+
+                            new JFrame().setVisible(true);
+                            dispose();
+                        } else { // a senha não está correta
+                            errorLog.setText("A senha para o usuário \"" + userInput.getText() + "\" está incorreta");
+                            paintInput(1, 1);
+                        }
+                    } else { // o usuário não existe no banco
+                        errorLog.setText("Não foi encontrado nenhum usuário com o nome \"" + userInput.getText() + "\"");
+                        paintInput(0, 1);
+                        paintInput(1, 1);
+                    }
+
+                    userInput.setEnabled(true);
+                    passInput.setEnabled(true);
+                    jCheckBox1.setEnabled(true);
+                    jButton1.setEnabled(true);
+                } catch (SQLException | IOException ex) {
+
+                }
             }
-            statement.setString(2, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, getPass));
-
-            result = statement.executeQuery();
-            if (result.next()) { // a senha está correta
-                UserModel model = new UserModel();
-                model.setId(result.getInt("id"));
-                model.setNome(result.getString("nome"));
-                model.setUsername(result.getString("username"));
-                model.setEmail(result.getString("email"));
-                model.setSenha(result.getString("senha"));
-                model.setTelefone(result.getString("telefone"));
-                model.setDataCadastro(result.getDate("data_cadastro"));
-                model.setHoraInicioExpediente(result.getTime("hora_inicio_expediente"));
-                model.setHoraFimExpediente(result.getTime("hora_fim_expediente"));
-                model.setHoraAlmoco(result.getTime("hora_almoco"));
-                model.setIdPergunta(result.getInt("id_pergunta"));
-                model.setRespostaPergunta(result.getString("resposta_pergunta"));
-                model.setIdSetor(result.getInt("id_setor"));
-                model.setIdPerfil(result.getInt("id_perfil"));
-                UsefulMethods.setCurrentUserModel(model);
-
-                new MainJFrame().setVisible(true);
-                dispose();
-            } else { // a senha não está correta
-                errorLog.setText("A senha para o usuário \"" + userInput.getText() + "\" está incorreta");
-                paintInput(1, 1);
-            }
-        } else { // o usuário não existe no banco
-            errorLog.setText("Não foi encontrado nenhum usuário com o nome \"" + userInput.getText() + "\"");
-            paintInput(0, 1);
-            paintInput(1, 1);
-        }
-
-        userInput.setEnabled(true);
-        passInput.setEnabled(true);
-        jCheckBox1.setEnabled(true);
-        jButton1.setEnabled(true);
+        }.start();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel errorLog;
@@ -380,7 +386,6 @@ public class LoginJFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;

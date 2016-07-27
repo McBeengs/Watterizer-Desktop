@@ -1,5 +1,6 @@
-package com.watterizer.panels.options;
+package com.watterizer.xml;
 
+import com.watterizer.panels.options.*;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
