@@ -313,8 +313,8 @@ public class UsefulMethods {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
                 //conn = DriverManager.getConnection("jdbc:mysql://www.db4free.net:3306/watterizer", "watterizer", "senairianos115");
-                conn = DriverManager.getConnection("jdbc:mysql://localhost/watterizer", "root", "");
-                //conn = DriverManager.getConnection("jdbc:mysql://10.0.3.230/watterizer", "watterizer", "senairianos115");
+                //conn = DriverManager.getConnection("jdbc:mysql://localhost/watterizer", "root", "");
+                conn = DriverManager.getConnection("jdbc:mysql://10.0.4.70/watterizer", "watterizer", "senairianos115");
             } catch (ClassNotFoundException | SQLException ex) {
                 return null;
             }

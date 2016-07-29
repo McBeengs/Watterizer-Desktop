@@ -151,8 +151,32 @@ public class ArduinoBridge {
         disconnectHandlers.add(handler);
     }
 
+    public void removeDisconnecHandler(DisconnectHandler handler) {
+        disconnectHandlers.remove(handler);
+    }
+
+    public void removeDisconnecHandler(int pos) {
+        disconnectHandlers.remove(pos);
+    }
+
+    public void removeAllDisconnecHandlers() {
+        disconnectHandlers.clear();
+    }
+
     public void addConsoleHandler(ConsoleHandler handler) {
         consoleHandlers.add(handler);
+    }
+
+    public void removeConsoleHandler(ConsoleHandler handler) {
+        consoleHandlers.remove(handler);
+    }
+
+    public void removeConsoleHandler(int pos) {
+        consoleHandlers.remove(pos);
+    }
+
+    public void removeAllConsoleHandlers() {
+        consoleHandlers.clear();
     }
 
     public interface DisconnectHandler {
