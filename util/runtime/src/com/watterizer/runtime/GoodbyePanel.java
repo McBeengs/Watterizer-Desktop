@@ -11,35 +11,21 @@
  * Copyright(c) {YEAR!!!} Mc's brilliant mind. All Rights (kinda) Reserved.
  */
 
- /*
+/*
  * {Insert class description here}
  */
+
 package com.watterizer.runtime;
 
-import static java.lang.Thread.sleep;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.awt.Container;
 
-public class CheckConnection extends javax.swing.JPanel {
+public class GoodbyePanel extends javax.swing.JPanel {
 
-    public static boolean START = false;
-
-    public CheckConnection() {
+    Container container;
+    
+    public GoodbyePanel(Container container) {
+        this.container = container;
         initComponents();
-        new Thread() {
-            @Override
-            public void run() {
-                while (!START) {
-                    try {
-                        sleep(2);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(CheckConnection.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                setVisible(true);
-                System.out.println("viva");
-            }
-        }.start();
     }
 
     @SuppressWarnings("unchecked")
@@ -49,8 +35,8 @@ public class CheckConnection extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
+        jLabel2 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
-        TULogin1 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(0, 0, 0));
 
@@ -74,8 +60,12 @@ public class CheckConnection extends javax.swing.JPanel {
         jSeparator2.setForeground(new java.awt.Color(255, 200, 20));
         jSeparator2.setPreferredSize(new java.awt.Dimension(0, 3));
 
-        jButton1.setText("Próximo");
-        jButton1.setEnabled(false);
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel2.setText("<html><body style=\"text-align: justify;\">    O auxiliar foi executado com sucesso. Caso a unidade Arduino volte a apresentar problemas, talvez seja necessária sua troca. Clique em \"Finalizar\" para sair desta janela (Não se esqueca de reabrir a aplicação)</body></html>");
+        jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        jButton1.setText("Finalizar");
         jButton1.setFocusable(false);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -83,24 +73,20 @@ public class CheckConnection extends javax.swing.JPanel {
             }
         });
 
-        TULogin1.setForeground(new java.awt.Color(255, 255, 255));
-        TULogin1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/spinner.gif"))); // NOI18N
-        TULogin1.setText("Verificando a conexão atual à unidade Arduino...");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(519, Short.MAX_VALUE)
-                .addComponent(jButton1)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jButton1)))
                 .addContainerGap())
             .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(TULogin1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -108,21 +94,21 @@ public class CheckConnection extends javax.swing.JPanel {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(TULogin1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 325, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 211, Short.MAX_VALUE)
                 .addComponent(jButton1)
                 .addGap(19, 19, 19))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        setVisible(false);
+        System.exit(0);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel TULogin1;
     private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator2;

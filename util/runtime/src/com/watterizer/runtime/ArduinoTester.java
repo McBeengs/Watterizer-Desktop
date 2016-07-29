@@ -28,6 +28,7 @@ public class ArduinoTester extends JFrame {
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public ArduinoTester() {
         setSize(500, 500);
+        setResizable(false);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -38,12 +39,9 @@ public class ArduinoTester extends JFrame {
         });
         setLocationRelativeTo(null);
         setTitle("Verificar Arduino");
-        WelcomePanel w = new WelcomePanel();
+        getContentPane().setLayout(new GridLayout(0, 1));
+        WelcomePanel w = new WelcomePanel(getContentPane());
         w.setVisible(true);
-        CheckConnection conn = new CheckConnection();
-        conn.setVisible(false);
-        add(w);
-        add(conn);
-        setVisible(true);
+        getContentPane().add(w);
     }
 }

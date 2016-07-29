@@ -11,15 +11,22 @@
  * Copyright(c) {YEAR!!!} Mc's brilliant mind. All Rights (kinda) Reserved.
  */
 
-/*
+ /*
  * {Insert class description here}
  */
-
 package com.watterizer.runtime;
+
+import com.watterizer.util.UsefulMethods;
+import com.watterizer.xml.XmlManager;
+import java.awt.Container;
+import javax.swing.JOptionPane;
 
 public class WelcomePanel extends javax.swing.JPanel {
 
-    public WelcomePanel() {
+    Container container;
+
+    public WelcomePanel(Container container) {
+        this.container = container;
         initComponents();
     }
 
@@ -98,8 +105,17 @@ public class WelcomePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        setVisible(false);
-        CheckConnection.START = true;
+        container.removeAll();
+        container.repaint();
+        container.revalidate();
+        XmlManager xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
+        if (xml.checkIfTagExists("terminal", "master")) {
+            container.add(new CheckConnectionMaster(container));
+            JOptionPane.showMessageDialog(this, "Este terminal está configurado como \"Master\"");
+        } else {
+            container.add(new CheckConnectionSlave(container));
+            JOptionPane.showMessageDialog(this, "Este terminal está configurado como \"Slave\"");
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

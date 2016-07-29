@@ -4,6 +4,7 @@ import com.watterizer.crypto.Encrypter;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
@@ -32,6 +33,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /* **********   runtime.java   **********
  *
@@ -60,6 +63,12 @@ public class Runner {
 
     public static void main(String[] args) throws IOException, SQLException {
         EventQueue.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
             try {
                 String os = System.getProperty("os.name").toLowerCase();
                 String openUser = null;
@@ -92,13 +101,9 @@ public class Runner {
                     String content = UsefulMethods.getOptions();
 
                     if (content != null) {
-                        try {
-                            getOptions.createNewFile();
-                            PrintWriter writer = new PrintWriter(getOptions);
+                        getOptions.createNewFile();
+                        try (PrintWriter writer = new PrintWriter(getOptions)) {
                             writer.print(content);
-                            writer.close();
-                        } catch (IOException ex) {
-                            Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                 }
@@ -200,7 +205,7 @@ public class Runner {
                                         dialog.dispose();
                                         frame.dispose();
                                         adminOk = true;
-                                        new ArduinoTester();
+                                        new ArduinoTester().setVisible(true);
                                     } else {
                                         JOptionPane.showMessageDialog(null, "Login incorreto", "Erro", JOptionPane.ERROR_MESSAGE);
                                     }
@@ -266,14 +271,14 @@ public class Runner {
     private static ArrayList<String> getAllRunningProcesses() throws IOException {
         ArrayList<String> lines = new ArrayList<>();
         String line;
-        Process p = Runtime.getRuntime().exec("jps -lv");
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-        while ((line = input.readLine()) != null) {
-            lines.add(line);
+        String home = System.getProperty("java.home");
+        home = home.substring(0, home.length() - 3) + "bin\\";
+        Process p = Runtime.getRuntime().exec(home + "jps -lv");
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            while ((line = input.readLine()) != null) {
+                lines.add(line);
+            }
         }
-
-        input.close();
         return lines;
     }
 

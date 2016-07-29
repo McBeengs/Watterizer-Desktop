@@ -17,14 +17,22 @@
 package com.watterizer.util;
 
 import com.watterizer.xml.XmlManager;
+import java.awt.Desktop;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JEditorPane;
 import javax.swing.JOptionPane;
+import javax.swing.event.HyperlinkEvent;
 
 public class UsefulMethods {
 
@@ -57,7 +65,36 @@ public class UsefulMethods {
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<root>\n"
-                + "    <exec>watt_app.jar</exec>"
+                + "  <gui>\n"
+                + "    <language attr=\"0\">Português</language>\n"
+                + "    <style attr=\"0\">Metal</style>\n"
+                + "    <databaseName>db</databaseName>\n"
+                + "    <databaseUrl>jdbc:mysql://localhost/db</databaseUrl>\n"
+                + "    <databaseUser>root</databaseUser>\n"
+                + "    <databasePass></databasePass>\n"
+                + "    <autoLogin>false</autoLogin>\n"
+                + "    <user></user>\n"
+                + "    <pass></pass>\n"
+                + "  </gui>\n"
+                + "  <arduino>\n"
+                + "    <board>Uno</board>\n"
+                + "    <integer id=\"components\">2</integer>\n"
+                + "    <integer id=\"com1\">0</integer>\n"
+                + "    <integer id=\"com2\">0</integer>\n"
+                + "    <integer id=\"com3\">0</integer>\n"
+                + "    <integer id=\"com4\">0</integer>\n"
+                + "    <integer id=\"com5\">0</integer>\n"
+                + "    <integer id=\"com6\">0</integer>\n"
+                + "    <integer id=\"com7\">0</integer>\n"
+                + "    <integer id=\"com8\">0</integer>\n"
+                + "    <integer id=\"com9\">0</integer>\n"
+                + "    <integer id=\"com10\">0</integer>\n"
+                + "    <integer id=\"com11\">0</integer>\n"
+                + "    <integer id=\"com12\">0</integer>\n"
+                + "    <integer id=\"com13\">0</integer>\n"
+                + "    <integer id=\"com14\">0</integer>\n"
+                + "    <integer id=\"com15\">0</integer>\n"
+                + "  </arduino>\n"
                 + "</root>\n"
                 + "";
     }
@@ -73,8 +110,135 @@ public class UsefulMethods {
         return null;
     }
 
+    public static XmlManager getManagerInstance(int manager) {
+        if (manager == OPTIONS && options != null) {
+            return options;
+        } else if (manager == LANGUAGE && language != null) {
+            return language;
+        }
+
+        options = new XmlManager();
+        boolean checkOS = false;
+
+        File getConfig = new File(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "config");
+        if (!getConfig.exists()) {
+            getConfig.mkdir();
+        }
+
+        File getOptions = new File(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
+        if (!getOptions.exists()) {
+            String content = UsefulMethods.getOptions();
+
+            if (content != null) {
+                try {
+                    getOptions.createNewFile();
+                    PrintWriter writer = new PrintWriter(getOptions);
+                    writer.print(content);
+                    writer.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                checkOS = true;
+            }
+        }
+
+        options.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
+        switch (manager) {
+            case OPTIONS:
+                return options;
+            case LANGUAGE:
+                if (!checkOS) {
+                    language = new XmlManager();
+                    String temp = options.getContentByName("language", 0);
+                    language.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "language"
+                            + File.separator + temp.toLowerCase() + ".xml");
+
+                    return language;
+                }
+        }
+
+        return null;
+    }
+
+    public static void updateManagersInstances() {
+        UsefulMethods get = new UsefulMethods();
+        options = new XmlManager();
+        String separator = System.getProperty("file.separator");
+
+        File getConfig = new File(UsefulMethods.getClassPath(get.getClass()) + separator + "config");
+        if (!getConfig.exists()) {
+            getConfig.mkdir();
+        }
+
+        File getOptions = new File(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
+        if (!getOptions.exists()) {
+            String content = UsefulMethods.getOptions();
+
+            if (content != null) {
+                try {
+                    getOptions.createNewFile();
+                    PrintWriter writer = new PrintWriter(getOptions);
+                    writer.print(content);
+                } catch (IOException ex) {
+                    Logger.getLogger(get.getClass().getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
+        options.loadFile(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
+        language = new XmlManager();
+        String temp = options.getContentByName("language", 0);
+        temp = temp.substring(0, temp.indexOf(","));
+        language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
+    }
+
     public static long getTimeOfOpening() {
         return TIME_OF_OPENING;
+    }
+
+    public static void makeHyperlinkOptionPane(String[] message, String link, int linkIndex, int messageType, String messageTitle) {
+        JOptionPane pane = new JOptionPane(null, messageType);
+
+        StringBuilder style = new StringBuilder("font-family:" + pane.getFont().getFamily() + ";");
+        style.append("font-weight:").append(pane.getFont().isBold() ? "bold" : "normal").append(";");
+        style.append("font-size:").append(pane.getFont().getSize()).append("pt;");
+        style.append("background-color: rgb(").append(pane.getBackground().getRed()).append(", ")
+                .append(pane.getBackground().getGreen()).append(", ").append(pane.getBackground().getBlue()).append(");");
+
+        JEditorPane ep = new JEditorPane();
+        ep.setEditorKit(JEditorPane.createEditorKitForContentType("text/html"));
+        ep.setEditable(false);
+        ep.setBorder(null);
+
+        String show = "";
+        for (int i = 0; i < message.length; i++) {
+            if (i != linkIndex) {
+                show += message[i];
+            } else {
+                show += " <a href=\"" + link + "\">" + message[i] + "</a>";
+            }
+        }
+
+        ep.setText("<html><body style=\"" + style + "\">" + show + "</body></html>");
+
+        ep.addHyperlinkListener((HyperlinkEvent e) -> {
+            if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+                try {
+                    Desktop.getDesktop().browse(e.getURL().toURI());
+                } catch (IOException | URISyntaxException ex) {
+
+                }
+            }
+        });
+
+        JOptionPane.showMessageDialog(null, ep, messageTitle, messageType);
+    }
+
+    public static String getSimpleDateFormat() {
+        Calendar date = Calendar.getInstance();
+
+        return date.getDisplayName(2, 2, Locale.US) + " " + date.get(Calendar.DATE) + ", " + date.get(Calendar.YEAR);
     }
 
     public static Connection getDBInstance() {
