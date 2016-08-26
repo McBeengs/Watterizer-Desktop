@@ -32,7 +32,7 @@ public class ArduinoBridge {
         "/dev/usbdev", // Linux
         "/dev/tty", // Linux
         "/dev/serial", // Linux
-        "COM3", "COM7" // Windows
+        "COM3", "COM8" // Windows
     };
 
     public ArduinoBridge() {

@@ -20,11 +20,20 @@ import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Desktop;
+import java.io.BufferedReader;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -95,15 +104,6 @@ public class UsefulMethods {
                 + "    <integer id=\"com4\">0</integer>\n"
                 + "    <integer id=\"com5\">0</integer>\n"
                 + "    <integer id=\"com6\">0</integer>\n"
-                + "    <integer id=\"com7\">0</integer>\n"
-                + "    <integer id=\"com8\">0</integer>\n"
-                + "    <integer id=\"com9\">0</integer>\n"
-                + "    <integer id=\"com10\">0</integer>\n"
-                + "    <integer id=\"com11\">0</integer>\n"
-                + "    <integer id=\"com12\">0</integer>\n"
-                + "    <integer id=\"com13\">0</integer>\n"
-                + "    <integer id=\"com14\">0</integer>\n"
-                + "    <integer id=\"com15\">0</integer>\n"
                 + "  </arduino>\n"
                 + "</root>\n"
                 + "";
@@ -147,6 +147,43 @@ public class UsefulMethods {
         }
     }
 
+    public static String getWebServiceResponse(String url, String method, String json) throws MalformedURLException, ProtocolException, IOException {
+        URL u = new URL(url);
+        URLConnection con = u.openConnection();
+        HttpURLConnection http = (HttpURLConnection) con;
+        http.setRequestMethod(method);
+        http.setDoOutput(true);
+        String output;
+        StringBuilder sb;
+
+        if (json != null) {
+            byte[] out = json.getBytes(StandardCharsets.UTF_8);
+            int length = out.length;
+
+            http.setFixedLengthStreamingMode(length);
+            http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            http.connect();
+            try (OutputStream os = http.getOutputStream()) {
+                os.write(out);
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+            sb = new StringBuilder();
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
+        } else {
+            http.connect();
+            BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+            sb = new StringBuilder();
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
+        }
+
+        return sb.toString();
+    }
+
     public static XmlManager getManagerInstance(int manager) {
         if (manager == OPTIONS && options != null) {
             return options;
@@ -169,9 +206,9 @@ public class UsefulMethods {
             if (content != null) {
                 try {
                     getOptions.createNewFile();
-                    PrintWriter writer = new PrintWriter(getOptions);
-                    writer.print(content);
-                    writer.close();
+                    try (PrintWriter writer = new PrintWriter(getOptions)) {
+                        writer.print(content);
+                    }
                 } catch (IOException ex) {
                     Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
                 }

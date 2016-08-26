@@ -17,6 +17,9 @@
 package com.watterizer.panels.main;
 
 import aurelienribon.slidinglayout.SLPanel;
+import com.google.gson.Gson;
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import com.watterizer.json.JSONObject;
 import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -24,7 +27,10 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.net.ProtocolException;
+import java.nio.charset.Charset;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -80,23 +86,22 @@ public class MeasurerPanel extends SLPanel {
                 int seconds = 0;
                 double spentAverage = 0;
 
-                try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + sqlDate.toString().replaceAll("-", "")
-                        + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
-
-                    if (rs.next()) {
+                try {
+                    measure = new ArrayList<>();
+                    String json = UsefulMethods.getWebServiceResponse("http://10.0.4.70:1515/gasto/hoje", "GET", null);
+                    if (json != null) {
                         dayIsAlreadyStored = true;
-                        measure = readGastosArrayOfToday();
+                        //measure = readGastosArrayOfToday();
 
-                        measure.stream().forEach((d) -> {
-                            totalSpent += d * 60.0; // foi dividido por 60, então isso restora o valor original
-                        });
+//                        measure.stream().forEach((d) -> {;
+//                            totalSpent += d * 60.0; // foi dividido por 60, então isso restora o valor original
+//                        });
                     } else {
                         measure = new ArrayList<>();
                         sqlTime = new Time(sqlDate.getTime());
                     }
+                } catch (IOException ex) {
 
-                } catch (SQLException ex) {
-                    Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 createChart();
@@ -112,39 +117,38 @@ public class MeasurerPanel extends SLPanel {
                     totalSpent += currentSpent;
                     totalSpentLabel.setText(String.format("%.2f", totalSpent) + " kWh");
 
-                    if (seconds % 60 == 0) {
+                    if (seconds % 1 == 0) {
                         measure.add(spentAverage / 60.0);
                         updateChart(spentAverage / 60.0);
                         spentAverage = 0;
                     }
 
-                    if (seconds % 60 == 0) { // 1 min
+                    if (seconds % 1 == 0) { // 1 min
                         seconds = 0;
 
                         new Thread("Updating Spent on DB") {
                             @Override
                             public void run() {
-                                try {
-                                    if (dayIsAlreadyStored) {
-                                        try (PreparedStatement prepared = conn.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?")) {
-                                            prepared.setObject(1, measure);
-                                            prepared.setDate(2, sqlDate);
-                                            prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
-                                            prepared.execute();
-                                        }
-                                    } else {
-                                        try (PreparedStatement statement = conn.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)")) {
-                                            statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
-                                            statement.setDate(2, sqlDate);
-                                            Time time = new Time(UsefulMethods.getTimeOfOpening());
-                                            statement.setTime(3, time);
-                                            statement.setObject(4, measure);
-                                            statement.execute();
-                                        }
-                                        dayIsAlreadyStored = true;
-                                    }
-                                } catch (SQLException ex) {
-                                    Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
+                                if (dayIsAlreadyStored) {
+//                                        try (PreparedStatement prepared = conn.prepareStatement("UPDATE gasto SET consumo_array = ? WHERE data = ? AND id_usuario = ?")) {
+//                                            prepared.setObject(1, measure);
+//                                            prepared.setDate(2, sqlDate);
+//                                            prepared.setInt(3, UsefulMethods.getCurrentUserModel().getId());
+//                                            prepared.execute();
+//                                        }
+                                    Gson gson = new Gson();
+
+                                    System.out.println(gson.toJson(measure));
+                                } else {
+//                                        try (PreparedStatement statement = conn.prepareStatement("INSERT INTO gasto(id_usuario, data, hora_inicio, consumo_array) VALUES (?, ?, ?, ?)")) {
+//                                            statement.setInt(1, UsefulMethods.getCurrentUserModel().getId());
+//                                            statement.setDate(2, sqlDate);
+//                                            Time time = new Time(UsefulMethods.getTimeOfOpening());
+//                                            statement.setTime(3, time);
+//                                            statement.setObject(4, measure);
+//                                            statement.execute();
+//                                        }
+                                    dayIsAlreadyStored = true;
                                 }
                             }
                         }.start();
@@ -165,10 +169,7 @@ public class MeasurerPanel extends SLPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jSeparator2 = new javax.swing.JSeparator();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -191,33 +192,8 @@ public class MeasurerPanel extends SLPanel {
             .addGap(0, 296, Short.MAX_VALUE)
         );
 
-        jPanel2.setBackground(new java.awt.Color(255, 200, 20));
-
-        jLabel2.setFont(new java.awt.Font("Microsoft YaHei", 0, 36)); // NOI18N
-        jLabel2.setText("Medidor");
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addContainerGap(446, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addContainerGap())
-        );
-
         jSeparator1.setBackground(new java.awt.Color(255, 200, 20));
         jSeparator1.setForeground(new java.awt.Color(255, 200, 20));
-
-        jSeparator2.setBackground(new java.awt.Color(255, 200, 20));
-        jSeparator2.setForeground(new java.awt.Color(255, 200, 20));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -246,53 +222,58 @@ public class MeasurerPanel extends SLPanel {
         moneySpentLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         moneySpentLabel.setText("R$ 3,70");
 
+        setLayer(jPanel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jSeparator1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jLabel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jLabel3, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jLabel4, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(currentSpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(totalSpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(moneySpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jSeparator2)
             .addComponent(jSeparator1)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(31, 31, 31))
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(totalSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 181, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(totalSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(currentSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 174, Short.MAX_VALUE))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(4, 4, 4)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel1)
-                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel3)
-                    .addComponent(totalSpentLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(totalSpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel4)
-                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(19, Short.MAX_VALUE))
+                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(70, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -317,7 +298,7 @@ public class MeasurerPanel extends SLPanel {
             minute = new Minute(); // a week
             strd.add(minute, 0.0);
             minute = (Minute) minute.next();
-            
+
             stored.stream().map((d) -> {
                 strd.add(minute, d);
                 return d;
@@ -346,18 +327,24 @@ public class MeasurerPanel extends SLPanel {
     }
 
     private void createChart() {
-        try {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DATE, -7);
-            String last = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-            ResultSet check = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
-                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId());
+//        Calendar cal = Calendar.getInstance();
+//        cal.add(Calendar.DATE, -7);
+//        String last = new java.sql.Date(cal.getTimeInMillis()).toString();
 
-            if (check.next()) {
-                stored = readGastosArrayOfLastDOTW();
-                check.close();
+        try {
+            String json = UsefulMethods.getWebServiceResponse("http://10.0.4.70:1515/gasto", "GET", null);
+            json = json.substring(1, json.length() - 1);
+            if (!json.isEmpty()) {
+                JSONObject obj = new JSONObject(json);
+                if (!obj.isNull("gasto")) {
+                    measure = convertSpentJSONToArray(obj);
+//                stored = readGastosArrayOfLastDOTW(check);
+//                check.close();
+                }
             }
-        } catch (SQLException ex) {
+        } catch (ProtocolException ex) {
+            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -387,68 +374,38 @@ public class MeasurerPanel extends SLPanel {
         dataset.getSeries("Consumo atual").add(minute, spent);
     }
 
-    private ArrayList<Double> readGastosArrayOfToday() {
-        try {
-            Calendar cal = Calendar.getInstance();
-            String today = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-            ObjectInputStream is;
-            ArrayList<Double> array;
-            try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + today
-                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
-                rs.next();
-                sqlDate = rs.getDate("data");
-                sqlTime = rs.getTime("hora_inicio");
-                Blob blob = rs.getBlob("consumo_array");
-                byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
-                blob.free();
-                is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
-                array = (ArrayList<Double>) is.readObject();
-            }
-            is.close();
+    private ArrayList<Double> convertSpentJSONToArray(JSONObject obj) throws IOException, ClassNotFoundException {
+        ArrayList<Double> send = new ArrayList<>();
+//        String data = obj.getJSONObject("gasto").get("data").toString();
+//        data = data.substring(1, data.length() - 1);
 
-            return array;
-        } catch (SQLException | IOException | ClassNotFoundException ex) {
-            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-
-    private ArrayList<Double> readGastosArrayOfLastDOTW() {
-        try {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DATE, -7);
-            String last = new java.sql.Date(cal.getTimeInMillis()).toString().replaceAll("-", "");
-            ObjectInputStream is;
-            ArrayList<Double> array;
-            try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM gasto WHERE data = " + last
-                    + " AND id_usuario = " + UsefulMethods.getCurrentUserModel().getId())) {
-                rs.next();
-                storedSqlDate = rs.getDate("data");
-                storedSqlTime = rs.getTime("hora_inicio");
-                Blob blob = rs.getBlob("consumo_array");
-                byte[] blobAsBytes = blob.getBytes(1, (int) blob.length());
-                blob.free();
-                is = new ObjectInputStream(new ByteArrayInputStream(blobAsBytes));
-                array = (ArrayList<Double>) is.readObject();
-            }
-            is.close();
-            return array;
-        } catch (SQLException | IOException | ClassNotFoundException ex) {
-            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
+        System.out.println(obj.toString());
+        //String[] n = data.split(",");
+//        char[] chars = new char[n.length];
+//
+//        for (int i = 0; i < n.length; i++) {
+//            chars[i] = (char) Integer.parseInt(n[i]);
+//        }
+//        
+//        String object = new String(chars);
+//        System.out.println(object);
+//        
+//        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(object.getBytes()));
+//        send = (ArrayList<Double>) ois.readObject();
+//        
+//        for (Double d : send) {
+//            System.out.println(d);
+//        }
+        return send;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel currentSpentLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel moneySpentLabel;
     private javax.swing.JLabel totalSpentLabel;
     // End of variables declaration//GEN-END:variables

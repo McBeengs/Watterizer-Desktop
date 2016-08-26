@@ -1,18 +1,20 @@
 package com.watterizer.panels;
 
-import com.watterizer.panels.main.JFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.sql.Connection;
+import java.net.URLConnection;
 import java.util.Locale;
-import javax.swing.Action;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.Timer;
 
@@ -123,6 +125,7 @@ public class SplashScreen extends javax.swing.JFrame {
         t.start();
     }
 
+    @SuppressWarnings("ResultOfObjectAllocationIgnored")
     private void executeTests() {
         jProgressBar1.setMinimum(0);
         jProgressBar1.setMaximum(60);
@@ -132,8 +135,12 @@ public class SplashScreen extends javax.swing.JFrame {
             checkInternetConn();
 
             fadeOutSplash(1000, (ActionEvent e) -> {
-                new LoginJFrame();
-                dispose();
+                try {
+                    new LoginJFrame();
+                    dispose();
+                } catch (IOException | InterruptedException ex) {
+                    Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
             });
 
         } catch (Exception ex) {
@@ -232,7 +239,7 @@ public class SplashScreen extends javax.swing.JFrame {
 //            errorDetail = language.getContentById("arduinoFailure");
 //            throw new Exception("Arduino");
 //        }
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30; i++) {
             jProgressBar1.setValue(i);
             Thread.sleep(10);
         }
@@ -246,23 +253,30 @@ public class SplashScreen extends javax.swing.JFrame {
             throw new Exception("Internet");
         }
 
-        for (int i = 10; i < 30; i++) {
+        for (int i = 30; i < 60; i++) {
             jProgressBar1.setValue(i);
             Thread.sleep(10);
         }
 
-        infoDisplayer.setText(language.getContentById("testDb"));
-        Connection conn = UsefulMethods.getDBInstance();
-        for (int i = 30; i < 50; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
+        try {
+            URL url = new URL("http://10.0.4.70:1515/test");
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(1000);
+            conn.setReadTimeout(1000);
+            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+            StringBuilder sb = new StringBuilder();
+            String output;
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
 
-        if (conn == null) {
-            errorDetail = language.getContentById("dbFailure").replace("&string", xml.getContentByName("databaseName", 0));
+            System.out.println(sb.toString());
+        } catch (Exception ex) {
+            errorDetail = language.getContentById("dbFailure");
             throw new Exception("DB");
         }
-        for (int i = 50; i < 60; i++) {
+
+        for (int i = 60; i <= 100; i++) {
             jProgressBar1.setValue(i);
             Thread.sleep(10);
         }
@@ -297,7 +311,7 @@ public class SplashScreen extends javax.swing.JFrame {
                 new Thread() {
                     @Override
                     public void run() {
-                        
+
                     }
                 }.start();
                 error.disposeWindow();

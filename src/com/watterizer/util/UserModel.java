@@ -1,24 +1,22 @@
 package com.watterizer.util;
 
-import java.sql.Date;
 import java.sql.Time;
 
 public class UserModel {
-    
+
     private int id;
-    private String nome;
     private String username;
-    private String email;
     private String senha;
+    private String email;
+    private String nome;
     private String telefone;
-    private Date dataCadastro;
-    private Time horaInicioExpediente;
-    private Time horaFimExpediente;
-    private Time horaAlmoco;
+    private Time horaEntrada;
+    private Time horaIntervalo;
+    private Time expediente;
+    private int idPerfil;
     private int idPergunta;
     private String respostaPergunta;
-    private int idSetor;
-    private int idPerfil;
+    private String token;
 
     public int getId() {
         return id;
@@ -68,38 +66,6 @@ public class UserModel {
         this.telefone = telefone;
     }
 
-    public Date getDataCadastro() {
-        return dataCadastro;
-    }
-
-    public void setDataCadastro(Date dataCadastro) {
-        this.dataCadastro = dataCadastro;
-    }
-
-    public Time getHoraInicioExpediente() {
-        return horaInicioExpediente;
-    }
-
-    public void setHoraInicioExpediente(Time horaInicioExpediente) {
-        this.horaInicioExpediente = horaInicioExpediente;
-    }
-
-    public Time getHoraFimExpediente() {
-        return horaFimExpediente;
-    }
-
-    public void setHoraFimExpediente(Time horaFimExpediente) {
-        this.horaFimExpediente = horaFimExpediente;
-    }
-
-    public Time getHoraAlmoco() {
-        return horaAlmoco;
-    }
-
-    public void setHoraAlmoco(Time horaAlmoco) {
-        this.horaAlmoco = horaAlmoco;
-    }
-
     public int getIdPergunta() {
         return idPergunta;
     }
@@ -116,14 +82,6 @@ public class UserModel {
         this.respostaPergunta = respostaPergunta;
     }
 
-    public int getIdSetor() {
-        return idSetor;
-    }
-
-    public void setIdSetor(int idSetor) {
-        this.idSetor = idSetor;
-    }
-
     public int getIdPerfil() {
         return idPerfil;
     }
@@ -131,5 +89,36 @@ public class UserModel {
     public void setIdPerfil(int idPerfil) {
         this.idPerfil = idPerfil;
     }
-    
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public Time getHoraEntrada() {
+        return horaEntrada;
+    }
+
+    public void setHoraEntrada(Time horaEntrada) {
+        this.horaEntrada = horaEntrada;
+    }
+
+    public Time getHoraIntervalo() {
+        return horaIntervalo;
+    }
+
+    public void setHoraIntervalo(Time horaIntervalo) {
+        this.horaIntervalo = horaIntervalo;
+    }
+
+    public Time getExpediente() {
+        return expediente;
+    }
+
+    public void setExpediente(Time expediente) {
+        this.expediente = expediente;
+    }
 }
