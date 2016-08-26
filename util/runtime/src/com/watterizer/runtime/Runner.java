@@ -1,24 +1,26 @@
 package com.watterizer.runtime;
 
 import com.watterizer.crypto.Encrypter;
+import com.watterizer.json.JSONObject;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.logging.Level;
@@ -61,41 +63,34 @@ public class Runner {
     private static JFrame frame;
     private static boolean adminOk = false;
 
-    public static void main(String[] args) throws IOException, SQLException {
+    public static void main(String[] args) throws IOException {
         EventQueue.invokeLater(() -> {
             try {
+                PrintStream out = new PrintStream(new FileOutputStream(UsefulMethods.getClassPath(Runner.class) + File.separator + "log.txt"));
+                System.setErr(out);
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            try {
-                String os = System.getProperty("os.name").toLowerCase();
-                String openUser = null;
-                String openId = null;
-                String openIdSetor = null;
-                String openTimeOfOpening = null;
+                String openUser;
+                String openId;
+                String openIdSetor;
+                String openTimeOfOpening;
                 String openTimeOfClose = Long.toString(System.currentTimeMillis());
-                String dbLink = null;
-                String dbUser = null;
-                String dbPass = null;
+                openUser = "Dona Marocas";
+                openId = "1";
+                openIdSetor = "2";
+                openTimeOfOpening = "hoje";
 
                 try {
-//            openUser = args[0];
-//            openId = args[1];
-//            openIdSetor = args[2];
-//            openTimeOfOpening = args[3];
-//            dbLink = args[4];
-//            dbUser = args[5];
-//            dbPass = args[6];
+//                    openUser = args[0];
+//                    openId = args[1];
+//                    openIdSetor = args[2];
+//                    openTimeOfOpening = args[3];
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Execução inválida. Inicie a partir do executável Java \"watt_exec.jar\"", "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Execução inválida. Inicie a partir do executável Java \"watt_app.jar\"", "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
-                Connection conn = null;
                 XmlManager xml = new XmlManager();
-                File getOptions = new File(UsefulMethods.getClassPath(Runner.class) + "params.xml");
+                File getOptions = new File(UsefulMethods.getClassPath(Runner.class) + File.separator + "params.xml");
 
                 if (!getOptions.exists()) {
                     String content = UsefulMethods.getOptions();
@@ -110,42 +105,31 @@ public class Runner {
 
                 xml.loadFile(getOptions);
                 XmlManager config = new XmlManager();
-                config.loadFile(UsefulMethods.getClassPath(Runner.class) + "config" + File.separator + "options.xml");
+                config.loadFile(UsefulMethods.getClassPath(Runner.class) + File.separator + "config" + File.separator + "options.xml");
 
                 try {
-                    Class.forName("com.mysql.jdbc.Driver");
-                    conn = DriverManager.getConnection(config.getContentByName("databaseUrl", 0), config.getContentByName("databaseUser", 0),
-                            Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, config.getContentByName("databasePass", 0)));
-                } catch (ClassNotFoundException ex) {
-                    JOptionPane.showMessageDialog(null, "Falha ao localizar a biblioteca \"mysql-connector-java-5.1.18.jar\" na pasta \"libs\".", "Erro", JOptionPane.ERROR_MESSAGE);
-                    return;
-                } catch (SQLException ex) {
+                    URL url = new URL("http://10.0.4.70:1515/test");
+                    URLConnection conn = url.openConnection();
+                    conn.setConnectTimeout(1000);
+                    conn.setReadTimeout(1000);
+                    BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+                    StringBuilder sb = new StringBuilder();
+                    String output;
+                    while ((output = br.readLine()) != null) {
+                        sb.append(output);
+                    }
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Falha ao conectar-se ao banco de dados \"" + config.getContentByName("databaseName", 0)
                             + "\". Clique \"Ok\" para reiniciar.", "Erro", JOptionPane.ERROR_MESSAGE);
                     try {
-                        ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + "watt_runn.jar", openUser, openId,
-                                openTimeOfOpening, openTimeOfClose, dbLink, dbUser, dbPass);
+                        ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_runn.jar", openUser, openId,
+                                openTimeOfOpening, openTimeOfClose);
                         pb.directory(new File(UsefulMethods.getClassPath(Runner.class)));
                         pb.start();
                         System.exit(0);
                     } catch (IOException ex2) {
                         Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex2);
                     }
-                }
-                final Connection finalConn = conn;
-                ResultSet rs = conn.createStatement().executeQuery("SELECT id FROM perfil WHERE perfil = 'Administrador'");
-                rs.next();
-                int perfil = rs.getInt("id");
-
-                if (os.contains("win")) {
-
-                } else if (os.contains("uni") || os.contains("nux") || os.contains("aix")) {
-
-                } else if (os.contains("mac")) {
-
-                } else {
-                    JOptionPane.showMessageDialog(null, "Seu sistema operacional não suporta o Java JRE 8 ou acima.");
-                    return;
                 }
 
                 ArrayList<String> lines;
@@ -163,6 +147,19 @@ public class Runner {
                     }
 
                     if (!wasFound) {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                while (true) {
+                                    try {
+                                        Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
+                                    } catch (IOException | InterruptedException ex) {
+                                        Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                }
+                            }
+                        }.start();
+
                         String message = "Foi detectada uma falha de execução na aplicação \"Watterizer\". Reinicie a aplicação ou\n"
                                 + "entre em contato com um administrador para resolver o problema em até &num segundos \n"
                                 + "(10 minutos), caso contrário, uma advertência será gerada.";
@@ -175,8 +172,7 @@ public class Runner {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 try {
-                                    //System.out.println(UsefulMethods.getClassPath(Runner.class) + "watt_exec.jar");
-                                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", "C:\\Users\\Mc\\Desktop\\dist\\Alpha_13.jar", "teste");
+                                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_app.jar");
                                     pb.directory(new File(UsefulMethods.getClassPath(Runner.class)));
                                     pb.start();
                                     ArrayList<String> check = getAllRunningProcesses();
@@ -196,25 +192,56 @@ public class Runner {
                                 try {
                                     @SuppressWarnings("UseOfObsoleteCollectionType")
                                     Hashtable<String, String> info = loginJOptionPane(null);
-                                    PreparedStatement statement = finalConn.prepareStatement("SELECT * FROM usuario WHERE username = ? AND senha = ? AND id_perfil = ?");
-                                    statement.setString(1, info.get("user"));
-                                    statement.setString(2, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, info.get("pass")));
-                                    statement.setInt(3, perfil);
 
-                                    if (statement.executeQuery().next()) {
-                                        dialog.dispose();
-                                        frame.dispose();
-                                        adminOk = true;
-                                        new ArduinoTester().setVisible(true);
-                                    } else {
-                                        JOptionPane.showMessageDialog(null, "Login incorreto", "Erro", JOptionPane.ERROR_MESSAGE);
+                                    if (!info.get("user").isEmpty() && !info.get("pass").isEmpty()) {
+                                        URL url = new URL("http://10.0.4.70:1515/login");
+                                        URLConnection con = url.openConnection();
+                                        HttpURLConnection http = (HttpURLConnection) con;
+                                        http.setRequestMethod("POST");
+                                        http.setDoOutput(true);
+
+                                        String s = "{\n"
+                                                + "\"login\":\"" + info.get("user") + "\",\n"
+                                                + "\"senha\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, info.get("pass")) + "\"\n"
+                                                + "}";
+                                        byte[] out = s.getBytes(StandardCharsets.UTF_8);
+                                        int length = out.length;
+
+                                        http.setFixedLengthStreamingMode(length);
+                                        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                                        http.connect();
+                                        try (OutputStream os = http.getOutputStream()) {
+                                            os.write(out);
+                                        }
+
+                                        BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+                                        StringBuilder sb = new StringBuilder();
+                                        String output;
+                                        while ((output = br.readLine()) != null) {
+                                            sb.append(output);
+                                        }
+
+                                        String json = sb.toString();
+                                        json = json.substring(1, json.length() - 1);
+                                        JSONObject obj = new JSONObject(json);
+
+                                        if (obj.getString("perfil").equals("Administrador")) {
+                                            dialog.dispose();
+                                            frame.dispose();
+                                            adminOk = true;
+                                            JOptionPane.showMessageDialog(null, "O assistente foi finalizado e a advertência cancelada. Por favor verifique as instalações\n"
+                                                    + "e volte a executar o programa.");
+                                            System.exit(0);
+                                        } else {
+                                            JOptionPane.showMessageDialog(null, "Login incorreto", "Erro", JOptionPane.ERROR_MESSAGE);
+                                        }
                                     }
-                                } catch (SQLException ex) {
-                                    Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+                                } catch (IOException | HeadlessException ex) {
+
                                 }
                             }
                         });
-                        enterAdmin.setText("Entrar como administrador");
+                        enterAdmin.setText("Anular (Administrador)");
                         JButton[] buttons = new JButton[]{restart, enterAdmin};
                         JOptionPane pane = new JOptionPane(message.replace("&num", Integer.toString(600)), JOptionPane.INFORMATION_MESSAGE, 2, null, buttons);
                         dialog = new JDialog(frame, "Aviso", true);
@@ -223,6 +250,14 @@ public class Runner {
                         dialog.pack();
                         dialog.setLocationRelativeTo(null);
 
+                        final String finalUser = openUser;
+                        final String finalIdUser = openUser;
+                        final String finalIdSetor = openIdSetor;
+//                        String openUser;
+//                String openId;
+//                String openIdSetor;
+//                String openTimeOfOpening;
+//                String openTimeOfClose = Long.toString(System.currentTimeMillis());
                         new Thread() {
                             @Override
                             public void run() {
@@ -239,18 +274,49 @@ public class Runner {
 
                                 if (!adminOk) {
                                     try {
-                                        dialog.dispose();
-                                        finalConn.createStatement().execute("INSERT INTO ocorrencia (`id`, `id_usuario`, `titulo`, `id_setor`, `mensagem`) VALUES (NULL, '" + /*openId*/ "6" + "', '"
-                                                + "Mensagem do sistema - Falha com um dos Arduinos', '" + /*openIdSetor*/ "1" + "', 'Esta é uma mensagem automática do sistema, sendo altamente "
-                                                + "recomendável que a situação relatada aqui seja conferida para que os fatos relatados aqui tenham total veemência. \n\n"
-                                                + "Hoje (dia &date), as &date, houve um incidente com a unidade Arduino relacionada ao usuário &string. Essa mensagem diz respeito a um aviso enviado a tal usuário, "
-                                                + "e que o mesmo o ignorou, não relatou a nenhum administrador do sistema a já mencionada falha de hardware.\n\n"
-                                                + "É necessário que a unidade seja reparada o mais rápido possível, e que as medidas necessárias sejam tomadas para que a omissão não venha acontecer de novo.')");
-                                        JOptionPane.showMessageDialog(null, "Não foi detectada a entrada de um administrador nem de uma tentativa de reinício\n"
-                                                + " do aplicativo, logo uma advertência foi gerada no nome do usuário \"" + "fulano" + "\".");
-                                        System.exit(0);
-                                    } catch (SQLException ex) {
-                                        Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+                                        URL url = new URL("http://10.0.4.70:1515/advertencia");
+                                        URLConnection con = url.openConnection();
+                                        HttpURLConnection http = (HttpURLConnection) con;
+                                        http.setRequestMethod("POST");
+                                        http.setDoOutput(true);
+
+                                        String s = "{\n"
+                                                + "\"id_usuario\" : \"" + finalIdUser + "\",\n"
+                                                + "\"id_setor\" : \"" + finalIdSetor + "\",\n"
+                                                + "\"titulo\" : \"Mensagem do sistema - Falha com um dos Terminais\",\n"
+                                                + "\"mensagem\" : \"Esta é uma mensagem automática do sistema, sendo altamente recomendável que a situação relatada aqui "
+                                                + "seja conferida para que os fatos relatados aqui tenham total veemência.<br><br>Hoje (dia &date), as &date, houve um incidente "
+                                                + "com o terminal relacionado ao usuário " + finalUser + ". Essa mensagem diz respeito a um aviso enviado a tal usuário, e que "
+                                                + "o mesmo o ignorou, não relatou a nenhum administrador do sistema a já mencionada falha de hardware.<br><br>"
+                                                + "É necessário que a unidade seja reparada o mais rápido possível, e que as medidas necessárias sejam tomadas para que a omissão "
+                                                + "não venha acontecer de novo.\"\n"
+                                                + "}";
+
+                                        byte[] out = s.getBytes(StandardCharsets.UTF_8);
+                                        int length = out.length;
+
+                                        http.setFixedLengthStreamingMode(length);
+                                        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                                        http.connect();
+                                        try (OutputStream os = http.getOutputStream()) {
+                                            os.write(out);
+                                        }
+
+                                        BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+                                        StringBuilder sb = new StringBuilder();
+                                        String output;
+                                        while ((output = br.readLine()) != null) {
+                                            sb.append(output);
+                                        }
+
+                                        System.out.println(sb.toString());
+                                        if (sb.toString().equals("CREATED")) {
+                                            JOptionPane.showMessageDialog(null, "Não foi detectada a entrada de um administrador nem de uma tentativa de reinício\n"
+                                                    + " do aplicativo, logo uma advertência foi gerada no nome do usuário \"" + finalUser + "\".");
+                                            System.exit(0);
+                                        }
+                                    } catch (Exception ex) {
+
                                     }
                                 }
                             }
@@ -262,7 +328,7 @@ public class Runner {
 
                     lines.clear();
                 }
-            } catch (HeadlessException | SQLException | IOException ex) {
+            } catch (HeadlessException | IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
                 Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
             }
         });

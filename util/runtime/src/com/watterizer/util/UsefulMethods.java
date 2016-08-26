@@ -64,46 +64,19 @@ public class UsefulMethods {
         }
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<root>\n"
-                + "  <gui>\n"
-                + "    <language attr=\"0\">Português</language>\n"
-                + "    <style attr=\"0\">Metal</style>\n"
-                + "    <databaseName>db</databaseName>\n"
-                + "    <databaseUrl>jdbc:mysql://localhost/db</databaseUrl>\n"
-                + "    <databaseUser>root</databaseUser>\n"
-                + "    <databasePass></databasePass>\n"
-                + "    <autoLogin>false</autoLogin>\n"
-                + "    <user></user>\n"
-                + "    <pass></pass>\n"
-                + "  </gui>\n"
-                + "  <arduino>\n"
-                + "    <board>Uno</board>\n"
-                + "    <integer id=\"components\">2</integer>\n"
-                + "    <integer id=\"com1\">0</integer>\n"
-                + "    <integer id=\"com2\">0</integer>\n"
-                + "    <integer id=\"com3\">0</integer>\n"
-                + "    <integer id=\"com4\">0</integer>\n"
-                + "    <integer id=\"com5\">0</integer>\n"
-                + "    <integer id=\"com6\">0</integer>\n"
-                + "    <integer id=\"com7\">0</integer>\n"
-                + "    <integer id=\"com8\">0</integer>\n"
-                + "    <integer id=\"com9\">0</integer>\n"
-                + "    <integer id=\"com10\">0</integer>\n"
-                + "    <integer id=\"com11\">0</integer>\n"
-                + "    <integer id=\"com12\">0</integer>\n"
-                + "    <integer id=\"com13\">0</integer>\n"
-                + "    <integer id=\"com14\">0</integer>\n"
-                + "    <integer id=\"com15\">0</integer>\n"
-                + "  </arduino>\n"
-                + "</root>\n"
-                + "";
+                + "<exec>watt_app.jar</exec>";
     }
 
     public static String getClassPath(Class<?> cls) {
         try {
             String path = cls.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
-            return decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+            String send = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+            
+            if (send.endsWith(".jar")) {
+                send = send.substring(0, send.lastIndexOf("\\"));
+            }
+            return send; 
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
