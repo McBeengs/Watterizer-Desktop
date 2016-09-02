@@ -1,0 +1,9 @@
+balloon tip = Balões de aviso
+
+commons / jcommon = complemento para jFreeChart
+
+jFreeChart = gráficos
+
+RXTXcomm = Comunicação Arduino
+
+Tween-Engine / SlidingLayout = Animações

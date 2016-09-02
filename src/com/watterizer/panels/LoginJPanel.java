@@ -336,10 +336,9 @@ public class LoginJPanel extends javax.swing.JPanel {
                     http.setDoOutput(true);
 
                     String s = "{\n"
-                            + "\"login\":\"" + userInput.getText() + "\",\n"
-                            + "\"senha\":\"" + new String(passInput.getPassword()) + "\"\n"
+                            + "\"login\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, userInput.getText()) + "\",\n"
+                            + "\"senha\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, new String(passInput.getPassword())) + "\"\n"
                             + "}";
-                    s = Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, s);
                     byte[] out = s.getBytes(StandardCharsets.UTF_8);
                     int length = out.length;
 
@@ -394,7 +393,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                     jCheckBox1.setEnabled(true);
                     jButton1.setEnabled(true);
                 } catch (Exception ex) {
-                    Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    System.exit(0);
                 }
             }
         }.start();
