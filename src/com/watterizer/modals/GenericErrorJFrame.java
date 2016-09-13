@@ -1,4 +1,4 @@
-package com.watterizer.panels;
+package com.watterizer.modals;
 
 import java.awt.event.ActionListener;
 
@@ -105,9 +105,7 @@ public class GenericErrorJFrame extends javax.swing.JFrame {
         backgroundPOG = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMaximumSize(new java.awt.Dimension(570, 520));
         setMinimumSize(new java.awt.Dimension(570, 520));
-        setPreferredSize(new java.awt.Dimension(570, 520));
         setResizable(false);
         getContentPane().setLayout(null);
 

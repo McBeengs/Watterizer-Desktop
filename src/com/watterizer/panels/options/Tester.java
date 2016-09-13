@@ -5,8 +5,8 @@
  */
 package com.watterizer.panels.options;
 
-import com.sun.java.swing.plaf.windows.WindowsSeparatorUI;
 import java.awt.Color;
+import java.awt.Font;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.UIManager;
@@ -19,10 +19,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class Tester {
 
     public static void main(String[] args) {
-        UIManager.put("SeparatorUI", "com.sun.java.swing.plaf.windows.WindowsSeparatorUI");
-        UIManager.put("TreeUI", "com.sun.java.swing.plaf.windows.WindowsTreeUI");
-        UIManager.put("Button.background", Color.red);
-
         for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) {
                 try {
@@ -33,6 +29,29 @@ public class Tester {
                 }
             }
         }
+        
+        UIManager.put("ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI");
+        UIManager.put("ProgressBar.cellLength", Integer.MAX_VALUE);
+        UIManager.put("ProgressBar.foreground", new Color(51, 153, 255));
+        UIManager.put("SeparatorUI", "javax.swing.plaf.metal.MetalSeparatorUI");
+        UIManager.put("Separator.foreground", new Color(160, 160, 160));
+        UIManager.put("SeparatorUI.shadow", new Color(160, 160, 160));
+        UIManager.put("TreeUI", "javax.swing.plaf.metal.MetalTreeUI");
+        UIManager.put("SeparatorUI", "javax.swing.plaf.metal.MetalSeparatorUI");
+        UIManager.put("Separator.foreground", new Color(255, 200, 20));
+        UIManager.put("Separator.background", new Color(255, 200, 20));
+        UIManager.put("TreeUI", "javax.swing.plaf.metal.MetalTreeUI");
+        UIManager.put("ComboBox.background", new Color(255, 200, 20));
+        UIManager.put("Button.background", new Color(255, 200, 20));
+        UIManager.put("Button.select", new Color(255, 220, 20));
+        UIManager.put("ComboBox.buttonBackground", new Color(255, 220, 20));
+        UIManager.put("Button.font", new Font("Tahoma", Font.PLAIN, 11));
+        UIManager.put("OptionPane.messageForeground", Color.white);
+        UIManager.put("OptionPane.background", Color.black);
+        UIManager.put("OptionPane.opaque", false);
+        UIManager.put("OptionPane.sameSizeButtons", true);
+        UIManager.put("Panel.background", Color.black);
+        
         new OptionsJFrame().setVisible(true);
     }
 }

@@ -1,5 +1,7 @@
-package com.watterizer.panels;
+package com.watterizer.modals;
 
+import com.watterizer.modals.GenericErrorJFrame;
+import com.watterizer.modals.LoginJFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
@@ -7,12 +9,10 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -231,110 +231,61 @@ public class SplashScreen extends javax.swing.JFrame {
     }
 
     private boolean checkInternetConn() throws Exception {
-        infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
-        infoDisplayer.setText(language.getContentById("testArduino"));
+        if (Boolean.parseBoolean(xml.getContentById("isDebugActive")) && Boolean.parseBoolean(xml.getContentById("offlineMode"))) {
+            return true;
+        } else {
+            infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
+            infoDisplayer.setText(language.getContentById("testArduino"));
 //        try {
 //            UsefulMethods.getArduinoInstance();
 //        } catch (IOException ex) {
 //            errorDetail = language.getContentById("arduinoFailure");
 //            throw new Exception("Arduino");
 //        }
-        for (int i = 0; i < 30; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
-
-        infoDisplayer.setText(language.getContentById("testInternet"));
-        try {
-            URL url = new URL("https://www.google.com");
-            url.openStream();
-        } catch (Exception ex) {
-            errorDetail = language.getContentById("internetFailure");
-            throw new Exception("Internet");
-        }
-
-        for (int i = 30; i < 60; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
-
-        try {
-            URL url = new URL("http://10.0.4.70:1515/test");
-            URLConnection conn = url.openConnection();
-            conn.setConnectTimeout(1000);
-            conn.setReadTimeout(1000);
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-            StringBuilder sb = new StringBuilder();
-            String output;
-            while ((output = br.readLine()) != null) {
-                sb.append(output);
+            for (int i = 0; i < 30; i++) {
+                jProgressBar1.setValue(i);
+                Thread.sleep(10);
             }
 
-            System.out.println(sb.toString());
-        } catch (Exception ex) {
-            errorDetail = language.getContentById("dbFailure");
-            throw new Exception("DB");
-        }
+            infoDisplayer.setText(language.getContentById("testInternet"));
+//        try {
+//            URL url = new URL("https://www.google.com");
+//            url.openStream();
+//        } catch (Exception ex) {
+//            errorDetail = language.getContentById("internetFailure");
+//            throw new Exception("Internet");
+//        }
 
-        for (int i = 60; i <= 100; i++) {
-            jProgressBar1.setValue(i);
-            Thread.sleep(10);
-        }
+            for (int i = 30; i < 60; i++) {
+                jProgressBar1.setValue(i);
+                Thread.sleep(10);
+            }
 
-        return true;
-    }
-
-    public static void main(String args[]) {
-        Locale.setDefault(new Locale("pt", "BR"));
-        String separator = File.separator;
-
-        File getConfig = new File(UsefulMethods.getClassPath(SplashScreen.class) + separator + "config");
-        if (!getConfig.exists()) {
-            getConfig.mkdir();
-        }
-
-        File getOptions = new File(UsefulMethods.getClassPath(SplashScreen.class) + "config" + separator + "options.xml");
-        if (!getOptions.exists()) {
-            final XmlManager style = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
-            //make first run setup screen
-            //new SetupContainer(style).setVisible(true);
-            //return;
-        }
-
-        XmlManager style;
-        try {
-            style = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
-        } catch (java.lang.NullPointerException ex) {
-            GenericErrorJFrame error = new GenericErrorJFrame("Falha com as configurações", GenericErrorJFrame.ALERT_MESSAGE,
-                    "", GenericErrorJFrame.OK);
-            error.setRightButtonAction((ActionEvent e) -> {
-                new Thread() {
-                    @Override
-                    public void run() {
-
-                    }
-                }.start();
-                error.disposeWindow();
-            });
-            error.setVisible(true);
-            return;
-        }
-        String set = style.getContentByName("style", 0);
-
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if (set.equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
+            try {
+                URL url = new URL(xml.getContentByName("webServiceHost", 0) + "/test");
+                URLConnection conn = url.openConnection();
+                conn.setConnectTimeout(1000);
+                conn.setReadTimeout(1000);
+                BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+                StringBuilder sb = new StringBuilder();
+                String output;
+                while ((output = br.readLine()) != null) {
+                    sb.append(output);
                 }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(SplashScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
 
-        java.awt.EventQueue.invokeLater(() -> {
-            new SplashScreen().setVisible(true);
-        });
+                System.out.println(sb.toString());
+            } catch (Exception ex) {
+                errorDetail = language.getContentById("dbFailure");
+                throw new Exception("DB");
+            }
+
+            for (int i = 60; i <= 100; i++) {
+                jProgressBar1.setValue(i);
+                Thread.sleep(10);
+            }
+
+            return true;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

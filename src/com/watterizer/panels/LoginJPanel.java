@@ -5,16 +5,20 @@
  */
 package com.watterizer.panels;
 
+import com.watterizer.modals.MainJFrame;
 import com.watterizer.crypto.Encrypter;
-import com.watterizer.json.JSONException;
-import com.watterizer.json.JSONObject;
-import com.watterizer.panels.main.MainJFrame;
+import com.watterizer.modals.LoginJFrame;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.util.UserModel;
 import com.watterizer.xml.XmlManager;
+import java.awt.AlphaComposite;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -27,7 +31,11 @@ import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
@@ -39,8 +47,8 @@ public class LoginJPanel extends javax.swing.JPanel {
     private final XmlManager language;
     private final ActionListener posLogin;
 
-    @SuppressWarnings("OverridableMethodCallInConstructor")
-    public LoginJPanel(ActionListener posLogin) {
+    @SuppressWarnings({"OverridableMethodCallInConstructor", "CallToThreadStartDuringObjectConstruction"})
+    public LoginJPanel(ActionListener posLogin) throws IOException, InterruptedException {
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
         language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
         initComponents();
@@ -49,13 +57,44 @@ public class LoginJPanel extends javax.swing.JPanel {
         if (Boolean.parseBoolean(xml.getContentByName("autoLogin", 0))) {
             userInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("user", 0)));
             passInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("pass", 0)));
-            if (JOptionPane.showConfirmDialog(null, "Logar-se como \"" + userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
+
+            JFrame frame = new JFrame();
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setUndecorated(true);
+            frame.setBackground(new Color(0, 255, 0, 0));
+
+            frame.setLayout(new BorderLayout());
+            frame.setAlwaysOnTop(true);
+            frame.setDefaultCloseOperation(0);
+
+            Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
+
+            new Thread() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
+                        } catch (IOException | InterruptedException ex) {
+                            Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }
+            }.start();
+            
+            ContentPane pane = new ContentPane();
+            frame.setContentPane(pane);
+            frame.getContentPane().setBackground(Color.BLACK);
+            frame.setVisible(true);
+            if (JOptionPane.showConfirmDialog(frame, "Logar-se como \"" + userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
                 if (checkInput()) {
+                    frame.dispose();
                     checkDB();
                 } else {
                     setVisible(true);
                 }
             } else {
+                frame.dispose();
                 setVisible(true);
             }
         } else {
@@ -329,6 +368,7 @@ public class LoginJPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
+                    xml.saveXml();
                     URL url = new URL("http://10.0.4.70:1515/login");
                     URLConnection con = url.openConnection();
                     HttpURLConnection http = (HttpURLConnection) con;
@@ -381,7 +421,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                         JButton lazy = new JButton();
                         lazy.addActionListener(posLogin);
                         lazy.doClick();
-                        
+
                     } catch (JSONException | ParseException ex) {
                         errorLog.setText("Login inválido");
                         paintInput(0, 1);
@@ -393,6 +433,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                     jCheckBox1.setEnabled(true);
                     jButton1.setEnabled(true);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     System.exit(0);
                 }
             }
@@ -411,4 +452,24 @@ public class LoginJPanel extends javax.swing.JPanel {
     private javax.swing.JPasswordField passInput;
     private javax.swing.JTextField userInput;
     // End of variables declaration//GEN-END:variables
+
+    public static class ContentPane extends JPanel {
+
+        public ContentPane() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            // Allow super to paint
+            super.paintComponent(g);
+            // Apply our own painting effect
+            Graphics2D g2d = (Graphics2D) g.create();
+            // 50% transparent Alpha
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+            g2d.setColor(getBackground());
+            g2d.fill(getBounds());
+            g2d.dispose();
+        }
+    }
 }

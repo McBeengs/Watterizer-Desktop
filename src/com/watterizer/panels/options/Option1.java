@@ -3,6 +3,7 @@ package com.watterizer.panels.options;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
+import java.io.File;
 import javax.swing.UIManager;
 
 public class Option1 extends javax.swing.JPanel {
@@ -14,11 +15,19 @@ public class Option1 extends javax.swing.JPanel {
     private XmlManager xml;
     private XmlManager language;
 
-    public Option1() {
-        //this.xml = xml;
+    public Option1(XmlManager xml) {
+        this.xml = xml;
         language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
 
-        languages = new String[]{"English"};
+        File file = new File(UsefulMethods.getClassPath(Option1.class) + File.separator + "language");
+        languages = new String[file.listFiles().length];
+        
+        for (int i = 0; i < languages.length; i++) {
+            String s = file.listFiles()[i].getName();
+            s = s.substring(0, s.indexOf("."));
+            s = s.substring(0, 1).toUpperCase() + s.substring(1);
+            languages[i] = s;
+        }
 
         UIManager.LookAndFeelInfo[] plafs = UIManager.getInstalledLookAndFeels();
         styles = new String[plafs.length];
@@ -29,11 +38,12 @@ public class Option1 extends javax.swing.JPanel {
 
         initComponents();
 
-        //languageActive = Integer.parseInt(xml.getContentByAttribute("language", 0, "selected"));
-        //languageSelector.setSelectedIndex(languageActive);
+        languageActive = Integer.parseInt(xml.getContentByAttribute("language", 0, "attr"));
+        languageSelector.setSelectedIndex(languageActive);
 
-        //styleSelected = Integer.parseInt(xml.getContentByAttribute("style", 0, "selected"));
-        //styleSelector.setSelectedIndex(styleSelected);
+        styleSelected = Integer.parseInt(xml.getContentByAttribute("style", 0, "attr"));
+        styleSelector.setSelectedIndex(styleSelected);
+        
     }
 
     @SuppressWarnings("unchecked")
@@ -47,14 +57,19 @@ public class Option1 extends javax.swing.JPanel {
         languageSelector = new javax.swing.JComboBox<>();
         styleLabel = new javax.swing.JLabel();
         styleSelector = new javax.swing.JComboBox<>();
-        updates = new javax.swing.JCheckBox();
 
+        setBackground(new java.awt.Color(0, 0, 0));
         setMinimumSize(new java.awt.Dimension(516, 434));
 
         mainLabel.setFont(new java.awt.Font("Segoe UI Emoji", 0, 24)); // NOI18N
+        mainLabel.setForeground(new java.awt.Color(255, 255, 255));
         mainLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        mainLabel.setText(language.getContentByName("mainLabel", 0) + " " + language.getContentById("options"));
+        mainLabel.setText("Opções Gerais");
 
+        topSeparator.setBackground(new java.awt.Color(255, 200, 20));
+        topSeparator.setForeground(new java.awt.Color(255, 200, 20));
+
+        languageLabel.setForeground(new java.awt.Color(255, 255, 255));
         languageLabel.setText(language.getContentById("language"));
 
         languageSelector.setModel(new javax.swing.DefaultComboBoxModel<>(languages));
@@ -65,6 +80,7 @@ public class Option1 extends javax.swing.JPanel {
             }
         });
 
+        styleLabel.setForeground(new java.awt.Color(255, 255, 255));
         styleLabel.setText(language.getContentById("style"));
 
         styleSelector.setModel(new javax.swing.DefaultComboBoxModel<>(styles));
@@ -72,13 +88,6 @@ public class Option1 extends javax.swing.JPanel {
         styleSelector.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 styleSelectorActionPerformed(evt);
-            }
-        });
-
-        updates.setText("Check updates on the start");
-        updates.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updatesActionPerformed(evt);
             }
         });
 
@@ -95,15 +104,12 @@ public class Option1 extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(28, 28, 28)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(updates)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(languageLabel)
-                                    .addComponent(styleLabel))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(languageSelector, 0, 100, Short.MAX_VALUE)
-                                    .addComponent(styleSelector, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
+                            .addComponent(languageLabel)
+                            .addComponent(styleLabel))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(languageSelector, 0, 100, Short.MAX_VALUE)
+                            .addComponent(styleSelector, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap(381, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -121,12 +127,8 @@ public class Option1 extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(styleLabel)
                     .addComponent(styleSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(113, 113, 113)
-                .addComponent(updates)
-                .addContainerGap(152, Short.MAX_VALUE))
+                .addContainerGap(288, Short.MAX_VALUE))
         );
-
-        updates.setSelected(Boolean.parseBoolean(xml.getContentById("update")));
     }// </editor-fold>//GEN-END:initComponents
 
     private void languageSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageSelectorActionPerformed
@@ -134,7 +136,7 @@ public class Option1 extends javax.swing.JPanel {
             UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", Color.yellow);
         }
 
-        xml.setContentByAttribute("language", "selected", 0, "" + languageSelector.getSelectedIndex());
+        xml.setContentByAttribute("language", "attr", 0, "" + languageSelector.getSelectedIndex());
         xml.setContentByName("language", 0, languageSelector.getItemAt(languageSelector.getSelectedIndex()));
     }//GEN-LAST:event_languageSelectorActionPerformed
 
@@ -143,17 +145,9 @@ public class Option1 extends javax.swing.JPanel {
             UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", Color.yellow);
         }
 
-        xml.setContentByAttribute("style", "selected", 0, "" + styleSelector.getSelectedIndex());
+        xml.setContentByAttribute("style", "attr", 0, "" + styleSelector.getSelectedIndex());
         xml.setContentByName("style", 0, styleSelector.getItemAt(styleSelector.getSelectedIndex()));
     }//GEN-LAST:event_styleSelectorActionPerformed
-
-    private void updatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updatesActionPerformed
-        if (updates.isSelected()) {
-            xml.setContentById("update", "true");
-        } else {
-            xml.setContentById("update", "false");
-        }
-    }//GEN-LAST:event_updatesActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -163,6 +157,5 @@ public class Option1 extends javax.swing.JPanel {
     private javax.swing.JLabel styleLabel;
     private javax.swing.JComboBox<String> styleSelector;
     private javax.swing.JSeparator topSeparator;
-    private javax.swing.JCheckBox updates;
     // End of variables declaration//GEN-END:variables
 }

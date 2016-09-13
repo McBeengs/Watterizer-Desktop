@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <!--
+    Strings genéricas que podem ser usadas no projeto inteiro, independente do lugar ou função
+    -->
+    <generic>
+        <string id="appName">Watterizer</string>
+        <string id="appVersion">1.0.0</string>
+        <string id="cancel">Cancelar</string>
+        <string id="ok">Ok</string>
+        <string id="save">Salvar</string>
+        <string id="exit">Sair</string>
+        <string id="start">Começar</string>
+        <string id="stop">Parar</string>
+        <string id="retry">Tentar novamente</string>
+        <string id="done">Pronto</string>
+        <string id="edit">Editar</string>
+        <string id="here">Aqui</string>
+        <string id="thisCaps">Isso</string>
+        <string id="data">Data</string>
+        <string id="updating">Atualizando</string>
+        <string id="close">Fechar</string>
+        <string id="file">Arquivo</string>
+        <string id="tools">Ferramentas</string>
+        <string id="options">Opções</string>
+        <string id="username">Usuário</string>
+        <string id="password">Senha</string>
+    </generic>
+    
+    <!--
+    Strings que serão usadas como título de acordo com o JFrame que foram designadas
+    -->
+    <frameTitles>
+        <string id="updateArtists">Update All Artists</string>
+        <string id="artistsOptions">Artists Options</string>
+        <string id="quickTask">Quick Task</string>
+    </frameTitles>
+    
+    <!--
+    Strings que serão usadas de acordo com o JOptionPane que foram designadas
+    -->
+    <jOptionPanes>
+        <string id="genericErrorTitle">Erro</string>
+        <string id="genericInfoTitle">Informação</string>
+        <string id="genericWarningTitle">Aviso</string>
+        <string id="cancelConfirm">Você tem certeza que deseja sair sem salvar?</string>
+        <string id="saveConfirm">Você tem certeza que deseja salvar estas configurações?</string>
+        <string id="internetDroppedOut">A conexão com a internet caiu.</string>
+        <string id="loginFailed">Falha ao fazer o login.</string>
+    </jOptionPanes>
+    
+    <!--
+    Strings que serão usadas de acordo com o GenericErrorJFrame que foram designadas
+    -->
+    <genericErrorJFrame>
+        <string id="failure">Falha com &string</string>
+        <string id="arduinoFailure">Não foi possível estabelecer a conexão entre a unidade Arduino configurada para este terminal. Isso pode ter sido causado por alguma configuração errada nas opções ou por uma falha de hardware. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.</string>
+        <string id="internetFailure">Não foi possível estabelecer a conexão com a Internet. Isso pode ter sido causado por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.</string>
+        <string id="dbFailure">Não foi possível estabelecer a conexão com o banco de dados "&string". Isso pode ter sido causado por alguma configuração errada nas opções ou por uma queda no provedor. Aguarde alguns instantes e tente novamente. Caso o problema persista, entre em contato com um administrador.</string>
+    </genericErrorJFrame>
+    
+    <!--
+    Strings que serão usadas na SplashScreen
+    -->
+    <splashScreen>
+        <string id="testArduino">Testando a conexão com o Arduino...</string>
+        <string id="testInternet">Testando a conexão com a Internet...</string>
+        <string id="testDb">Conectando-se ao servidor principal...</string>
+    </splashScreen>
+    
+    <!--
+    Strings que serão usadas no LoginJFrame
+    -->
+    <loginJFrame>
+        <string id="keepLogin">Salvar login</string>
+        <string id="adminConfig">Configurações Administrativas</string>
+    </loginJFrame>
+</root>

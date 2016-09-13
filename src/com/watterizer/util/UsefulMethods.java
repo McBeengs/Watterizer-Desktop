@@ -23,7 +23,10 @@ import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -34,10 +37,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -51,6 +50,8 @@ import net.java.balloontip.BalloonTip;
 import net.java.balloontip.styles.MinimalBalloonStyle;
 import net.java.balloontip.utils.FadingUtils;
 import net.java.balloontip.utils.TimingUtils;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPReply;
 
 public class UsefulMethods {
 
@@ -60,7 +61,7 @@ public class UsefulMethods {
     private static final long TIME_OF_OPENING = System.currentTimeMillis();
     private static XmlManager options;
     private static XmlManager language;
-    private static Connection conn = null;
+    private static FTPClient ftp;
     private static UserModel model;
 
     public static String getOptions() {
@@ -83,28 +84,21 @@ public class UsefulMethods {
         }
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<root>\n"
-                + "  <gui>\n"
-                + "    <language attr=\"0\">Português</language>\n"
-                + "    <style attr=\"0\">Metal</style>\n"
-                + "    <databaseName>db</databaseName>\n"
-                + "    <databaseUrl>jdbc:mysql://localhost/db</databaseUrl>\n"
-                + "    <databaseUser>root</databaseUser>\n"
-                + "    <databasePass></databasePass>\n"
-                + "    <autoLogin>false</autoLogin>\n"
-                + "    <user></user>\n"
-                + "    <pass></pass>\n"
-                + "  </gui>\n"
-                + "  <arduino>\n"
-                + "    <board>Uno</board>\n"
-                + "    <integer id=\"components\">2</integer>\n"
-                + "    <integer id=\"com1\">0</integer>\n"
-                + "    <integer id=\"com2\">0</integer>\n"
-                + "    <integer id=\"com3\">0</integer>\n"
-                + "    <integer id=\"com4\">0</integer>\n"
-                + "    <integer id=\"com5\">0</integer>\n"
-                + "    <integer id=\"com6\">0</integer>\n"
-                + "  </arduino>\n"
+                + "    <gui>\n"
+                + "        <language attr=\"0\">Português</language>\n"
+                + "        <style attr=\"0\">Metal</style>\n"
+                + "        <webServiceHost>http://localhost:8080</webServiceHost>\n"
+                + "        <autoLogin>false</autoLogin>\n"
+                + "        <user></user>\n"
+                + "        <pass></pass>\n"
+                + "    </gui>\n"
+                + "    <debug>\n"
+                + "        <boolean id=\"isDebugActive\">false</boolean>\n"
+                + "        <boolean id=\"saveLog\">true</boolean>\n"
+                + "        <boolean id=\"offlineMode\">false</boolean>\n"
+                + "    </debug>\n"
                 + "</root>\n"
                 + "";
     }
@@ -129,22 +123,7 @@ public class UsefulMethods {
     }
 
     public static void saveCurrentUserModel() {
-        Connection db = getDBInstance();
-        try {
-            PreparedStatement statement = db.prepareStatement("UPDATE usuario SET nome = ?, username = ?, email = ?, senha = ?, telefone = ?, id_pergunta = ?, resposta_pergunta = ? WHERE id = ?");
-            statement.setString(1, getCurrentUserModel().getNome());
-            statement.setString(2, getCurrentUserModel().getUsername());
-            statement.setString(3, getCurrentUserModel().getEmail());
-            statement.setString(4, getCurrentUserModel().getSenha());
-            statement.setString(5, getCurrentUserModel().getTelefone());
-            statement.setInt(6, getCurrentUserModel().getIdPergunta());
-            statement.setString(7, getCurrentUserModel().getRespostaPergunta());
-            statement.setInt(8, getCurrentUserModel().getId());
 
-            statement.execute();
-        } catch (SQLException ex) {
-            Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     public static String getWebServiceResponse(String url, String method, String json) throws MalformedURLException, ProtocolException, IOException {
@@ -276,6 +255,36 @@ public class UsefulMethods {
         language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
     }
 
+    public static InputStream downloadFile(String source) throws IOException {
+        if (ftp == null) {
+            ftp = new FTPClient();
+            ftp.connect("10.0.4.70", 21);
+
+            if (!FTPReply.isPositiveCompletion(ftp.getReplyCode())) {
+                System.err.println("FTP connection failed");
+                return null;
+            }
+
+            ftp.login("watterizer", "senairianos115");
+        }
+
+        return ftp.retrieveFileStream(source);
+    }
+
+    public static boolean uploadFile(String localFilePath, String fileName, String hostDir) throws IOException {
+        try {
+            InputStream input = new FileInputStream(new File(localFilePath));
+            if (!hostDir.endsWith("/")) {
+                hostDir += "/";
+            }
+            ftp.storeFile(hostDir + fileName, input);
+            return true;
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+
     public static long getTimeOfOpening() {
         return TIME_OF_OPENING;
     }
@@ -341,22 +350,5 @@ public class UsefulMethods {
                 TimingUtils.showTimedBalloon(balloonTip, 200);
             }
         }.start();
-    }
-
-    public static Connection getDBInstance() {
-        if (conn != null) {
-            return conn;
-        } else {
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
-                //conn = DriverManager.getConnection("jdbc:mysql://www.db4free.net:3306/watterizer", "watterizer", "senairianos115");
-                //conn = DriverManager.getConnection("jdbc:mysql://localhost/watterizer", "root", "");
-                conn = DriverManager.getConnection("jdbc:mysql://10.0.4.70/watterizer", "watterizer", "senairianos115");
-            } catch (ClassNotFoundException | SQLException ex) {
-                return null;
-            }
-
-            return conn;
-        }
     }
 }

@@ -14,16 +14,17 @@
  /*
  * {Insert class description here}
  */
-package com.watterizer.panels.main;
+package com.watterizer.panels;
 
 import aurelienribon.slidinglayout.SLPanel;
-import com.watterizer.json.JSONObject;
+import com.watterizer.net.SocketNodeJS;
 import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseWheelEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -32,17 +33,15 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.script.ScriptException;
 import javax.swing.JOptionPane;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -50,28 +49,35 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.Range;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MeasurerPanel extends SLPanel {
 
+    private SocketNodeJS socket;
     private JFreeChart chart;
     private Second second;
+    DateAxis range;
     private Hour hour;
-    private ArrayList<Double> stored;
-    private ArrayList<Double> measure;
-    private boolean dayIsAlreadyStored = false;
     private boolean isDBConnectionOk = true;
-    private long timeOfOpening = new Time(new Date().getTime()).getTime();
+    private long lastUpdate;
     private double totalSpent;
 
     @SuppressWarnings({"OverridableMethodCallInConstructor", "CallToThreadStartDuringObjectConstruction"})
     public MeasurerPanel() {
         initComponents();
-        measure = new ArrayList<>();
+        socket = new SocketNodeJS();
+        try {
+            socket.socketConnect("10.0.4.70", 3000);
+        } catch (IOException ex) {
+            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         jPanel1.setLayout(new GridLayout(0, 1));
         addComponentListener(new ComponentAdapter() {
@@ -92,18 +98,18 @@ public class MeasurerPanel extends SLPanel {
 
                 while (true) {
                     // Obter valores do arduino... Enquanto isso
-                    Random rgn = new Random();
-                    double currentSpent = rgn.nextInt(100) / 100.0;
+                    double r = Math.random();
+                    totalSpent += r;
+                    //String.format("%.2f", totalSpent)
 
-                    currentSpentLabel.setText(currentSpent + " kWh");
-                    totalSpent += currentSpent;
-                    totalSpentLabel.setText(String.format("%.2f", totalSpent) + " kWh");
-
-                    measure.add(currentSpent / 60.0);
-                    updateChart(currentSpent / 60.0);
+                    updateChart(r);
 
                     if (isDBConnectionOk) {
-                        updateDB();
+                        //updateDB(r);
+                        socket.echo("{"
+                                + "\"arduino\" : \"2\","
+                                + "\"gasto\" : \"" + r + "\""
+                                + "}");
                     }
                     try {
                         sleep(1000);
@@ -121,13 +127,6 @@ public class MeasurerPanel extends SLPanel {
 
         jPanel1 = new javax.swing.JPanel();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        currentSpentLabel = new javax.swing.JLabel();
-        totalSpentLabel = new javax.swing.JLabel();
-        moneySpentLabel = new javax.swing.JLabel();
-        jSlider1 = new javax.swing.JSlider();
 
         setBackground(new java.awt.Color(0, 0, 0));
         setOpaque(true);
@@ -138,82 +137,27 @@ public class MeasurerPanel extends SLPanel {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 584, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 283, Short.MAX_VALUE)
+            .addGap(0, 304, Short.MAX_VALUE)
         );
 
         jSeparator1.setBackground(new java.awt.Color(255, 200, 20));
         jSeparator1.setForeground(new java.awt.Color(255, 200, 20));
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Consumo atual:");
-
-        jLabel3.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("Consumo total:");
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI Semibold", 0, 18)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setText("Gasto total:");
-
-        currentSpentLabel.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
-        currentSpentLabel.setForeground(new java.awt.Color(255, 255, 255));
-        currentSpentLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        currentSpentLabel.setText("0,54 kWh");
-
-        totalSpentLabel.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
-        totalSpentLabel.setForeground(new java.awt.Color(255, 255, 255));
-        totalSpentLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        totalSpentLabel.setText("2,18 kWh");
-
-        moneySpentLabel.setFont(new java.awt.Font("Segoe UI Semibold", 0, 12)); // NOI18N
-        moneySpentLabel.setForeground(new java.awt.Color(255, 255, 255));
-        moneySpentLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        moneySpentLabel.setText("R$ 3,70");
-
-        jSlider1.setOpaque(false);
-        jSlider1.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSlider1StateChanged(evt);
-            }
-        });
-
         setLayer(jPanel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
         setLayer(jSeparator1, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(jLabel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(jLabel3, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(jLabel4, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(currentSpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(totalSpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(moneySpentLabel, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(jSlider1, javax.swing.JLayeredPane.DEFAULT_LAYER);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator1)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 206, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(totalSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(169, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSlider1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -221,96 +165,25 @@ public class MeasurerPanel extends SLPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
-                .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel1)
-                    .addComponent(currentSpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel3)
-                    .addComponent(totalSpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel4)
-                    .addComponent(moneySpentLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(50, Short.MAX_VALUE))
+                .addContainerGap(176, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jSlider1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider1StateChanged
-//        int value = jSlider1.getValue();
-//        long minimum = domainAxis.getMinimumDate().getTime();
-//        long maximum = domainAxis.getMaximumDate().getTime();
-//        if (value < lastValue) { // left
-//            minimum = minimum - delta;
-//            maximum = maximum - delta;
-//        } else { // right
-//            minimum = minimum + delta;
-//            maximum = maximum + delta;
-//        }
-//        DateRange range = new DateRange(minimum, maximum);
-//        domainAxis.setRange(range);
-    }//GEN-LAST:event_jSlider1StateChanged
 
     private XYDataset createDataset() {
         TimeSeriesCollection dataset = new TimeSeriesCollection();
         TimeSeries spent = new TimeSeries("Consumo atual");
 
-        if (stored != null && !stored.isEmpty()) {
-//            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-//            String prefix;
-//            int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-//
-//            if (day == 2 || day == 3 || day == 4 || day == 5 || day == 6) {
-//                prefix = "última ";
-//            } else {
-//                prefix = "último ";
-//            }
-//
-//            String storedAxis = "Consumo " + prefix + new SimpleDateFormat("EEEE").format(storedSqlDate).toLowerCase()
-//                    + " - Dia " + sdf.format(storedSqlDate);
-//            TimeSeries strd = new TimeSeries(storedAxis);
-//            hour = new Hour();
-//            hour = new Hour(); // a week
-//            strd.add(hour, 0.0);
-//            hour = (Hour) hour.next();
-//
-//            stored.stream().map((d) -> {
-//                strd.add(hour, d);
-//                return d;
-//            }).forEach((_item) -> {
-//                hour = (Hour) hour.next();
-//            });
-//
-//            dataset.addSeries(strd);
-        }
-
         second = new Second();
         spent.add(second, 0.0);
         second = (Second) second.next();
-
-        if (measure.size() > 0) {
-            measure.stream().map((d) -> {
-                spent.add(second, d);
-                return d;
-            }).forEach((_item) -> {
-                second = (Second) second.next();
-            });
-        }
 
         dataset.addSeries(spent);
         return dataset;
     }
 
     private void createChart() {
-//        Calendar cal = Calendar.getInstance();
-//        cal.add(Calendar.DATE, -7);
-//        String last = new java.sql.Date(cal.getTimeInMillis()).toString();
-
         try {
             String json = UsefulMethods.getWebServiceResponse("http://10.0.4.70:1515/gasto/hoje/1", "GET", null);
             json = json.substring(1, json.length() - 1);
@@ -318,15 +191,14 @@ public class MeasurerPanel extends SLPanel {
             if (!json.isEmpty()) {
                 json = "{" + json.replaceAll("\'", "\"") + "}";
                 JSONObject obj = new JSONObject(json);
-                measure = convertSpentJSONToArray(obj);
 
                 //16:46:47
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                Date lastUpdate = sdf.parse(obj.getString("hora"));
+                Date update = sdf.parse(obj.getString("hora"));
                 Date now = sdf.parse(sdf.format(new Date()));
+                lastUpdate = update.getTime();
 
-                timeOfOpening = now.getTime();
-                long diffInSeconds = getDateDiff(lastUpdate, now, TimeUnit.SECONDS);
+                long diffInSeconds = getDateDiff(update, now, TimeUnit.SECONDS);
                 System.out.println(obj.getString("hora"));
                 System.err.println((int) diffInSeconds);
 
@@ -350,10 +222,6 @@ public class MeasurerPanel extends SLPanel {
                     try (OutputStream os = http.getOutputStream()) {
                         os.write(out);
                     }
-
-                    for (int i = 0; i < diffInSeconds; i++) {
-                        measure.add(0.0);
-                    }
                 } catch (MalformedURLException ex) {
                     Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException ex) {
@@ -362,7 +230,7 @@ public class MeasurerPanel extends SLPanel {
             }
         } catch (ProtocolException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException | ParseException ex) {
+        } catch (IOException | ParseException | JSONException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -375,11 +243,10 @@ public class MeasurerPanel extends SLPanel {
         values.setTickMarkPaint(Color.WHITE);
         values.setTickLabelPaint(Color.WHITE);
 
-        DateAxis range = (DateAxis) chart.getXYPlot().getDomainAxis();
+        range = (DateAxis) chart.getXYPlot().getDomainAxis();
         range.setLabelPaint(Color.WHITE);
         range.setTickMarkPaint(Color.WHITE);
         range.setTickLabelPaint(Color.WHITE);
-        range.setRange(new Time(new Date().getTime()), new Time(new Date().getTime() + (1000 * 5)));
 
         XYPlot plot = chart.getXYPlot();
         plot.setDomainCrosshairVisible(true);
@@ -387,7 +254,7 @@ public class MeasurerPanel extends SLPanel {
         plot.setRangeCrosshairVisible(false);
 
         ChartPanel panel = new ChartPanel(chart);
-        panel.setMouseWheelEnabled(false);
+        panel.setMouseWheelEnabled(true);
         panel.setPopupMenu(null);
         panel.setFillZoomRectangle(false);
         jPanel1.add(panel);
@@ -399,10 +266,15 @@ public class MeasurerPanel extends SLPanel {
             TimeSeriesCollection dataset = (TimeSeriesCollection) chart.getXYPlot().getDataset();
             second = (Second) second.next();
             dataset.getSeries("Consumo atual").add(second, spent);
+            Calendar cal = Calendar.getInstance();
+            long top = cal.getTimeInMillis();
+            cal.add(Calendar.SECOND, -15);
+            long bottom = cal.getTimeInMillis();
+            range.setRange(new Range(bottom, top));
         }
     }
 
-    private ArrayList<Double> convertSpentJSONToArray(JSONObject obj) throws ParseException {
+    private ArrayList<Double> convertSpentJSONToArray(JSONObject obj) throws ParseException, JSONException {
         ArrayList<Double> send = new ArrayList<>();
         for (int i = 0; i < obj.length() - 1; i++) {
             send.add(Double.parseDouble(obj.getString("" + i)));
@@ -415,7 +287,7 @@ public class MeasurerPanel extends SLPanel {
         return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
     }
 
-    private void updateDB() {
+    private void updateDB(double spent) {
         try {
             URL url = new URL("http://10.0.4.70:1515/gasto");
             URLConnection con = url.openConnection();
@@ -424,7 +296,7 @@ public class MeasurerPanel extends SLPanel {
             http.setDoOutput(true);
 
             String json = "{"
-                    + "\"gasto\" : \"" + measure.get(measure.size() - 1) + "\""
+                    + "\"gasto\" : \"" + spent + "\""
                     + "}";
 
             byte[] out = json.getBytes(StandardCharsets.UTF_8);
@@ -437,8 +309,7 @@ public class MeasurerPanel extends SLPanel {
                 os.write(out);
             }
 
-            jSlider1.setMaximum(measure.size());
-            jSlider1.setValue(jSlider1.getMaximum());
+            socket.echo("" + spent);
         } catch (MalformedURLException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
         } catch (java.net.ConnectException ex) {
@@ -451,14 +322,7 @@ public class MeasurerPanel extends SLPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel currentSpentLabel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSlider jSlider1;
-    private javax.swing.JLabel moneySpentLabel;
-    private javax.swing.JLabel totalSpentLabel;
     // End of variables declaration//GEN-END:variables
 }

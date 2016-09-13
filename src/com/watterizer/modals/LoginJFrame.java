@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.watterizer.panels;
+package com.watterizer.modals;
 
+import com.watterizer.panels.LoginJPanel;
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;

@@ -1,12 +1,18 @@
 package com.watterizer.panels.options;
 
-import com.watterizer.panels.options.*;
+import com.watterizer.util.UsefulMethods;
+import com.watterizer.xml.XmlManager;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -21,21 +27,22 @@ public class OptionsJFrame extends javax.swing.JFrame {
     private DefaultMutableTreeNode hierarchy;
     private DefaultMutableTreeNode batch;
     private final GridBagConstraints c;
-    //private final XmlManager xml;
-    //private final XmlManager language;
+    private final XmlManager xml;
+    private final XmlManager language;
 
     public OptionsJFrame() {
-        //xml = UsefulMethods.loadManager(UsefulMethods.OPTIONS);
-        //language = UsefulMethods.loadManager(UsefulMethods.LANGUAGE);
+        xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
+        language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
 
-        //originalContent = xml.toString();
+        originalContent = xml.toString();
         initComponents();
         setTree();
+        getContentPane().setBackground(Color.black);
 
         mainContainer.setLayout(new GridBagLayout());
         c = new GridBagConstraints();
 
-        Option1 o1 = new Option1();
+        Option1 o1 = new Option1(xml);
         Option2 o2 = new Option2();
         
         o1.setVisible(true);
@@ -110,6 +117,7 @@ public class OptionsJFrame extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         optionsTree = new javax.swing.JTree();
         mainContainer = new javax.swing.JPanel();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -132,10 +140,15 @@ public class OptionsJFrame extends javax.swing.JFrame {
             }
         });
 
+        jScrollPane1.setBorder(null);
+
+        optionsTree.setBackground(new java.awt.Color(0, 0, 0));
         javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
         optionsTree.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
         optionsTree.setRootVisible(false);
         jScrollPane1.setViewportView(optionsTree);
+
+        mainContainer.setBackground(new java.awt.Color(0, 0, 0));
 
         javax.swing.GroupLayout mainContainerLayout = new javax.swing.GroupLayout(mainContainer);
         mainContainer.setLayout(mainContainerLayout);
@@ -145,8 +158,10 @@ public class OptionsJFrame extends javax.swing.JFrame {
         );
         mainContainerLayout.setVerticalGroup(
             mainContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 434, Short.MAX_VALUE)
         );
+
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -154,29 +169,33 @@ public class OptionsJFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 496, Short.MAX_VALUE)
+                    .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 328, Short.MAX_VALUE)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE)
-                    .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(saveButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jSeparator1)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(mainContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cancelButton)
+                            .addComponent(saveButton)))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING))
                 .addContainerGap())
         );
 
@@ -187,17 +206,17 @@ public class OptionsJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-//        int option = JOptionPane.showConfirmDialog(this, language.getContentById("saveConfirm"),
-//                language.getContentById("save"), 0);
-//
-//        if (option == JOptionPane.OK_OPTION) {
-//            try {
-//                xml.saveXml();
-//                this.dispose();
-//            } catch (IOException ex) {
-//                Logger.getLogger(OptionsJFrame.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//        }
+        int option = JOptionPane.showConfirmDialog(this, language.getContentById("saveConfirm"),
+                language.getContentById("save"), 0);
+
+        if (option == JOptionPane.OK_OPTION) {
+            try {
+                xml.saveXml();
+                this.dispose();
+            } catch (IOException ex) {
+                Logger.getLogger(OptionsJFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_saveButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
@@ -216,6 +235,7 @@ public class OptionsJFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JPanel mainContainer;
     private javax.swing.JTree optionsTree;
     private javax.swing.JButton saveButton;
@@ -229,6 +249,8 @@ public class OptionsJFrame extends javax.swing.JFrame {
 
             super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 
+            setForeground(Color.white);
+            setBackgroundNonSelectionColor(Color.black);
             setOpenIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/openArrow.png")));
             setClosedIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/closedArrow.png")));
             setLeafIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/mainBullet.png")));

@@ -14,14 +14,19 @@
  /*
  * {Insert class description here}
  */
-package com.watterizer.panels.main;
+package com.watterizer.modals;
 
+import com.watterizer.panels.MeasurerPanel;
+import com.watterizer.panels.RightClickUser;
 import com.watterizer.panels.RightClickUser;
 import com.watterizer.panels.options.OptionsJFrame;
 import com.watterizer.style.RoundedCornerBorder;
+import com.watterizer.util.UsefulMethods;
 import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -31,10 +36,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.URL;
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 
 public class MainJFrame extends javax.swing.JFrame {
@@ -44,7 +53,7 @@ public class MainJFrame extends javax.swing.JFrame {
     private final MeasurerPanel measurerPanel;
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
-    public MainJFrame() {
+    public MainJFrame() throws IOException {
         initComponents();
 
         addKeyListener(new KeyAdapter() {
@@ -94,11 +103,19 @@ public class MainJFrame extends javax.swing.JFrame {
             });
         }
 
+        getContentPane().setBackground(Color.BLACK);
         mainPanel.setLayout(new GridLayout(0, 1));
 
         measurerPanel = new MeasurerPanel();
         measurerPanel.setVisible(true);
         mainPanel.add(measurerPanel);
+        
+        
+        try {
+            iconDisplayer.setIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid1.png"))));
+        } catch (Exception ex) {
+            iconDisplayer.setIcon(null);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -110,6 +127,8 @@ public class MainJFrame extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         iconDisplayer = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenu2 = new javax.swing.JMenu();
@@ -151,6 +170,14 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setFont(new java.awt.Font("Microsoft YaHei", 1, 14)); // NOI18N
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel1.setText(UsefulMethods.getCurrentUserModel().getUsername());
+
+        jLabel3.setFont(new java.awt.Font("Microsoft YaHei", 0, 12)); // NOI18N
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel3.setText("Administrador");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -159,6 +186,10 @@ public class MainJFrame extends javax.swing.JFrame {
                 .addGap(22, 22, 22)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(23, 23, 23))
         );
@@ -170,7 +201,13 @@ public class MainJFrame extends javax.swing.JFrame {
                     .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(8, 8, 8)
-                        .addComponent(jLabel2)))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(5, 5, 5)
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel3)))))
                 .addContainerGap())
         );
 
@@ -246,7 +283,9 @@ public class MainJFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel iconDisplayer;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
