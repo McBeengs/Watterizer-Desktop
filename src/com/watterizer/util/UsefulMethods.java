@@ -17,9 +17,13 @@
 package com.watterizer.util;
 
 import com.watterizer.arduino.ArduinoBridge;
+import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Desktop;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
@@ -61,7 +65,9 @@ public class UsefulMethods {
     private static final long TIME_OF_OPENING = System.currentTimeMillis();
     private static XmlManager options;
     private static XmlManager language;
+    private static ArduinoBridge bridge;
     private static FTPClient ftp;
+    private static Font headerFont;
     private static UserModel model;
 
     public static String getOptions() {
@@ -215,11 +221,16 @@ public class UsefulMethods {
     }
 
     public static ArduinoBridge getArduinoInstance() throws IOException {
-        ArduinoBridge bridge = new ArduinoBridge();
-        if (bridge.waitForConnection(5000)) {
+        if (bridge != null) {
             return bridge;
         } else {
-            throw new IOException("Somehow the Arduino connection has fallen.");
+            bridge = new ArduinoBridge();
+            if (bridge.waitForConnection(5000)) {
+                return bridge;
+            } else {
+                bridge = null;
+                throw new IOException("Somehow the Arduino connection has fallen.");
+            }
         }
     }
 
@@ -253,6 +264,24 @@ public class UsefulMethods {
         String temp = options.getContentByName("language", 0);
         temp = temp.substring(0, temp.indexOf(","));
         language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
+    }
+
+    public static Font getHeaderFont() {
+        if (headerFont != null) {
+            return headerFont;
+        } else {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            try {
+                InputStream stream = UsefulMethods.class.getResourceAsStream("../style/featuredItem.ttf");
+                headerFont = Font.createFont(Font.TRUETYPE_FONT, stream);
+                ge.registerFont(headerFont);
+                headerFont = headerFont.deriveFont(Font.PLAIN, 30);
+                return headerFont;
+            } catch (FontFormatException | IOException ex) {
+                Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
+                return null;
+            }
+        }
     }
 
     public static InputStream downloadFile(String source) throws IOException {

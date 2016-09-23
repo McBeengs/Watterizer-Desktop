@@ -24,7 +24,7 @@ public class ArduinoBridge {
     private ArrayList<ConsoleHandler> consoleHandlers = new ArrayList<>();
     private ArrayList<DisconnectHandler> disconnectHandlers = new ArrayList<>();
     private boolean isBeingChecked = false;
-    private boolean isDisconnected;
+    private boolean isDisconnected = true;
     private CommPortIdentifier portId = null;
     private SerialPort serialPort = null;
     private BufferedReader input;

@@ -17,32 +17,24 @@
 package com.watterizer.panels;
 
 import aurelienribon.slidinglayout.SLPanel;
+import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.net.SocketNodeJS;
 import com.watterizer.util.UsefulMethods;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseWheelEvent;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.script.ScriptException;
-import javax.swing.JOptionPane;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -60,6 +52,7 @@ import org.json.JSONObject;
 
 public class MeasurerPanel extends SLPanel {
 
+    private ArduinoBridge arduinoBridge;
     private SocketNodeJS socket;
     private JFreeChart chart;
     private Second second;
@@ -70,8 +63,9 @@ public class MeasurerPanel extends SLPanel {
     private double totalSpent;
 
     @SuppressWarnings({"OverridableMethodCallInConstructor", "CallToThreadStartDuringObjectConstruction"})
-    public MeasurerPanel() {
+    public MeasurerPanel() throws IOException {
         initComponents();
+        //arduinoBridge = UsefulMethods.getArduinoInstance();
         socket = new SocketNodeJS();
         try {
             socket.socketConnect("10.0.4.70", 3000);
@@ -105,7 +99,6 @@ public class MeasurerPanel extends SLPanel {
                     updateChart(r);
 
                     if (isDBConnectionOk) {
-                        //updateDB(r);
                         socket.echo("{"
                                 + "\"arduino\" : \"2\","
                                 + "\"gasto\" : \"" + r + "\""
@@ -117,6 +110,27 @@ public class MeasurerPanel extends SLPanel {
                         Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
+                
+//                arduinoBridge.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
+//                    String console = evt.getConsoleOutput();
+//                    double r = parseConsole(console, "a0");
+//                    System.out.println(r);
+//                    updateChart(r);
+//
+//                    if (isDBConnectionOk) {
+//                        socket.echo("{"
+//                                + "\"arduino\" : \"2\","
+//                                + "\"gasto\" : \"" + r + "\""
+//                                + "}");
+//                    }
+//                });
+            }
+        }.start();
+        
+        new Thread() {
+            @Override
+            public void run() {
+                //socket.
             }
         }.start();
     }
@@ -127,6 +141,8 @@ public class MeasurerPanel extends SLPanel {
 
         jPanel1 = new javax.swing.JPanel();
         jSeparator1 = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(0, 0, 0));
         setOpaque(true);
@@ -141,14 +157,28 @@ public class MeasurerPanel extends SLPanel {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 304, Short.MAX_VALUE)
+            .addGap(0, 249, Short.MAX_VALUE)
         );
 
         jSeparator1.setBackground(new java.awt.Color(255, 200, 20));
         jSeparator1.setForeground(new java.awt.Color(255, 200, 20));
 
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.PLAIN, 33);
+        jLabel1.setFont(header);
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("Acelere, pah, pere, perrepetugamalepinogumalasinu");
+
+        header = header.deriveFont(Font.PLAIN, 20);
+        jLabel2.setFont(header);
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("- Sala 10");
+        jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
         setLayer(jPanel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
         setLayer(jSeparator1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jLabel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        setLayer(jLabel2, javax.swing.JLayeredPane.DEFAULT_LAYER);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -159,15 +189,25 @@ public class MeasurerPanel extends SLPanel {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(21, 21, 21)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(176, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(164, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -201,32 +241,6 @@ public class MeasurerPanel extends SLPanel {
                 long diffInSeconds = getDateDiff(update, now, TimeUnit.SECONDS);
                 System.out.println(obj.getString("hora"));
                 System.err.println((int) diffInSeconds);
-
-                try {
-                    URL url = new URL("http://10.0.4.70:1515/gasto/nulo");
-                    URLConnection con = url.openConnection();
-                    HttpURLConnection http = (HttpURLConnection) con;
-                    http.setRequestMethod("POST");
-                    http.setDoOutput(true);
-
-                    json = "{"
-                            + "\"intervalo\" : \"" + diffInSeconds + "\""
-                            + "}";
-
-                    byte[] out = json.getBytes(StandardCharsets.UTF_8);
-                    int length = out.length;
-
-                    http.setFixedLengthStreamingMode(length);
-                    http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                    http.connect();
-                    try (OutputStream os = http.getOutputStream()) {
-                        os.write(out);
-                    }
-                } catch (MalformedURLException ex) {
-                    Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-                }
             }
         } catch (ProtocolException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -270,16 +284,9 @@ public class MeasurerPanel extends SLPanel {
             long top = cal.getTimeInMillis();
             cal.add(Calendar.SECOND, -15);
             long bottom = cal.getTimeInMillis();
+            dataset.getSeries("Consumo atual").removeAgedItems(bottom, true);
             range.setRange(new Range(bottom, top));
         }
-    }
-
-    private ArrayList<Double> convertSpentJSONToArray(JSONObject obj) throws ParseException, JSONException {
-        ArrayList<Double> send = new ArrayList<>();
-        for (int i = 0; i < obj.length() - 1; i++) {
-            send.add(Double.parseDouble(obj.getString("" + i)));
-        }
-        return send;
     }
 
     private long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
@@ -287,41 +294,15 @@ public class MeasurerPanel extends SLPanel {
         return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
     }
 
-    private void updateDB(double spent) {
-        try {
-            URL url = new URL("http://10.0.4.70:1515/gasto");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("POST");
-            http.setDoOutput(true);
-
-            String json = "{"
-                    + "\"gasto\" : \"" + spent + "\""
-                    + "}";
-
-            byte[] out = json.getBytes(StandardCharsets.UTF_8);
-            int length = out.length;
-
-            http.setFixedLengthStreamingMode(length);
-            http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(out);
-            }
-
-            socket.echo("" + spent);
-        } catch (MalformedURLException ex) {
-            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (java.net.ConnectException ex) {
-            isDBConnectionOk = false;
-            System.err.println("");
-            JOptionPane.showMessageDialog(this, "A conexão com o banco de dados caiu", "Erro", JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ex) {
-            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    private double parseConsole(String console, String port) {
+        console = console.substring(console.indexOf(port) + 3);
+        console = console.substring(0, console.indexOf(")"));
+        return Double.parseDouble(console);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables

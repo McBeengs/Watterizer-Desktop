@@ -16,6 +16,9 @@ public class Watterizer {
     /**
      * @param args the command line arguments
      */
+    
+    static long time = System.currentTimeMillis();
+    
     public static void main(String[] args) {
         ArduinoBridge arduinoBridge = new ArduinoBridge();
 
@@ -25,18 +28,21 @@ public class Watterizer {
             System.out.println("Sucsess");
             System.err.println("Start reading lines from console...");
             System.err.println("-------------");
-            
+
             arduinoBridge.addDisconnectHandler((CommPortIdentifier id) -> {
                 System.out.println("ops");
             });
-            
+
             arduinoBridge.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
                 System.err.print("Read line: ");
-                System.out.println(evt.getConsoleOutput());
+                System.out.print(evt.getConsoleOutput());
+                long now = System.currentTimeMillis();
+                System.out.println(" | " + (time - now));
+                time = now;
             });
         } else {
             System.err.println("Failed");
         }
     }
-    
+
 }

@@ -7,16 +7,14 @@ package com.watterizer.panels;
 
 import com.watterizer.modals.MainJFrame;
 import com.watterizer.crypto.Encrypter;
-import com.watterizer.modals.LoginJFrame;
+import com.watterizer.util.OpaqueScreen;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.util.UserModel;
 import com.watterizer.xml.XmlManager;
 import java.awt.AlphaComposite;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,7 +28,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -45,10 +42,10 @@ public class LoginJPanel extends javax.swing.JPanel {
 
     private final XmlManager xml;
     private final XmlManager language;
-    private final ActionListener posLogin;
+    private final OpaqueScreen rootScreen;
 
     @SuppressWarnings({"OverridableMethodCallInConstructor", "CallToThreadStartDuringObjectConstruction"})
-    public LoginJPanel(ActionListener posLogin) throws IOException, InterruptedException {
+    public LoginJPanel(OpaqueScreen rootScreen) throws IOException, InterruptedException {
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
         language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
         initComponents();
@@ -57,15 +54,6 @@ public class LoginJPanel extends javax.swing.JPanel {
         if (Boolean.parseBoolean(xml.getContentByName("autoLogin", 0))) {
             userInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("user", 0)));
             passInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("pass", 0)));
-
-            JFrame frame = new JFrame();
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            frame.setUndecorated(true);
-            frame.setBackground(new Color(0, 255, 0, 0));
-
-            frame.setLayout(new BorderLayout());
-            frame.setAlwaysOnTop(true);
-            frame.setDefaultCloseOperation(0);
 
             Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
 
@@ -76,32 +64,31 @@ public class LoginJPanel extends javax.swing.JPanel {
                         try {
                             Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
                         } catch (IOException | InterruptedException ex) {
-                            Logger.getLogger(LoginJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
                 }
             }.start();
             
-            ContentPane pane = new ContentPane();
-            frame.setContentPane(pane);
-            frame.getContentPane().setBackground(Color.BLACK);
-            frame.setVisible(true);
-            if (JOptionPane.showConfirmDialog(frame, "Logar-se como \"" + userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
+            OpaqueScreen screen = new OpaqueScreen();
+            screen.setVisible(true);
+            
+            if (JOptionPane.showConfirmDialog(screen.getRootFrame(), "Logar-se como \"" + userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
                 if (checkInput()) {
-                    frame.dispose();
+                    screen.close();
                     checkDB();
                 } else {
                     setVisible(true);
                 }
             } else {
-                frame.dispose();
+                screen.close();
                 setVisible(true);
             }
         } else {
             setVisible(true);
         }
 
-        this.posLogin = posLogin;
+        this.rootScreen = rootScreen;
     }
 
     /**
@@ -151,7 +138,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jLabel6.setFont(new java.awt.Font("Microsoft YaHei", 0, 36)); // NOI18N
+        jLabel6.setFont(UsefulMethods.getHeaderFont());
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel6.setText("Login");
@@ -245,7 +232,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(errorLog, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addContainerGap(68, Short.MAX_VALUE))
         );
 
         jCheckBox1.setSelected(Boolean.parseBoolean(xml.getContentByName("autoLogin", 0)));
@@ -418,9 +405,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                         UsefulMethods.setCurrentUserModel(model);
 
                         new MainJFrame().setVisible(true);
-                        JButton lazy = new JButton();
-                        lazy.addActionListener(posLogin);
-                        lazy.doClick();
+                        rootScreen.close();
 
                     } catch (JSONException | ParseException ex) {
                         errorLog.setText("Login inválido");
@@ -433,7 +418,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                     jCheckBox1.setEnabled(true);
                     jButton1.setEnabled(true);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
                     System.exit(0);
                 }
             }

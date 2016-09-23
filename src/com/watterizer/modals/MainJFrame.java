@@ -18,15 +18,15 @@ package com.watterizer.modals;
 
 import com.watterizer.panels.MeasurerPanel;
 import com.watterizer.panels.RightClickUser;
-import com.watterizer.panels.RightClickUser;
 import com.watterizer.panels.options.OptionsJFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
+import com.watterizer.xml.XmlManager;
 import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -37,24 +37,25 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.URL;
+import java.net.ProtocolException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
 public class MainJFrame extends javax.swing.JFrame {
 
     //private boolean isIconfied = false;
-    private int currentPanel;
     private final MeasurerPanel measurerPanel;
+    private XmlManager xml;
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public MainJFrame() throws IOException {
         initComponents();
+        xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
 
         addKeyListener(new KeyAdapter() {
             @Override
@@ -109,8 +110,7 @@ public class MainJFrame extends javax.swing.JFrame {
         measurerPanel = new MeasurerPanel();
         measurerPanel.setVisible(true);
         mainPanel.add(measurerPanel);
-        
-        
+
         try {
             iconDisplayer.setIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid1.png"))));
         } catch (Exception ex) {
@@ -155,7 +155,9 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jPanel2.setBackground(new java.awt.Color(255, 200, 20));
 
-        jLabel2.setFont(new java.awt.Font("Microsoft YaHei", 0, 36)); // NOI18N
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.BOLD, 45);
+        jLabel2.setFont(header);
         jLabel2.setText("Medidor");
 
         iconDisplayer.setBackground(new java.awt.Color(255, 255, 255));
@@ -170,7 +172,8 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Microsoft YaHei", 1, 14)); // NOI18N
+        header = header.deriveFont(Font.BOLD, 22);
+        jLabel1.setFont(header);
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel1.setText(UsefulMethods.getCurrentUserModel().getUsername());
 
@@ -189,7 +192,7 @@ public class MainJFrame extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(iconDisplayer, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(23, 23, 23))
         );
@@ -202,12 +205,11 @@ public class MainJFrame extends javax.swing.JFrame {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(8, 8, 8)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(5, 5, 5)
                                 .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel3)))))
+                                .addComponent(jLabel3))
+                            .addComponent(jLabel2))))
                 .addContainerGap())
         );
 
@@ -260,23 +262,34 @@ public class MainJFrame extends javax.swing.JFrame {
 
         } else if (evt.getButton() == 3) { //right
             JPopupMenu menu = new JPopupMenu();
-            JButton jButton = new JButton(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                }
-            });
-            menu.add(new RightClickUser(new AbstractAction() {
+            RightClickUser user = new RightClickUser();
+            user.setTopButtonAction(new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     System.out.println("detalhes usuário");
                 }
-            }, new AbstractAction() {
+            });
+            user.setBottomButtonAction(new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
-                    System.out.println("sair");
+                    if (JOptionPane.showConfirmDialog(null, "Deseja fazer o logout?", "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                        try {
+                            String s = "{\n"
+                                    + "\"token\":\"" + UsefulMethods.getCurrentUserModel().getToken() + "\"\n"
+                                    + "}";
+                            
+                            UsefulMethods.getWebServiceResponse(xml.getContentByName("webServiceHost", 0) + "/logout", "GET", s);
+                            
+                            System.exit(0);
+                        } catch (ProtocolException ex) {
+                            Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (IOException ex) {
+                            Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
                 }
-            }));
+            });
+            menu.add(user);
             menu.show(iconDisplayer, evt.getX() - 400, evt.getY());
         }
     }//GEN-LAST:event_iconDisplayerMouseClicked

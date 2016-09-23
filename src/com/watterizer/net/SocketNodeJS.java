@@ -57,4 +57,14 @@ public class SocketNodeJS {
 
         return null;
     }
+    
+    public String readLine() {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            return in.readLine();
+        } catch (IOException ex) {
+            Logger.getLogger(SocketNodeJS.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
 }

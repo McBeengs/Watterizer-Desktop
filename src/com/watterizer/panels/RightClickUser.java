@@ -13,12 +13,8 @@ import javax.swing.Action;
  */
 public class RightClickUser extends javax.swing.JPanel {
 
-    public RightClickUser(Action b1, Action b2) {
+    public RightClickUser() {
         initComponents();
-        jButton1.setText("sdfjoghsdf");
-        jButton2.setText("jasgfasgj");
-        jButton1.setAction(b1);
-        jButton2.setAction(b2);
     }
 
     /**
@@ -72,6 +68,13 @@ public class RightClickUser extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    public void setTopButtonAction(Action action) {
+        jButton1.addActionListener(action);
+    }
+    
+    public void setBottomButtonAction(Action action) {
+        jButton2.addActionListener(action);
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
