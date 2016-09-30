@@ -16,6 +16,7 @@
  */
 package com.watterizer.util;
 
+import com.watterizer.models.UserModel;
 import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.xml.XmlManager;
@@ -95,7 +96,9 @@ public class UsefulMethods {
                 + "    <gui>\n"
                 + "        <language attr=\"0\">Português</language>\n"
                 + "        <style attr=\"0\">Metal</style>\n"
-                + "        <webServiceHost>http://localhost:8080</webServiceHost>\n"
+                + "        <webServiceHost>http://localhost</webServiceHost>\n"
+                + "        <webServicePort>12345</webServicePort>\n"
+                + "        <socketPort>12345</socketPort>\n"
                 + "        <autoLogin>false</autoLogin>\n"
                 + "        <user></user>\n"
                 + "        <pass></pass>\n"
@@ -362,7 +365,7 @@ public class UsefulMethods {
         return date.getDisplayName(2, 2, Locale.US) + " " + date.get(Calendar.DATE) + ", " + date.get(Calendar.YEAR);
     }
 
-    public static void makeBalloon(final JComponent component, final String text, final Color color) {
+    public static void makeBalloon(final JComponent component, final String text, final long time, final Color color) {
         new Thread("Showing ballon \"" + text + "\"") {
             @Override
             public void run() {
@@ -371,7 +374,7 @@ public class UsefulMethods {
 
                 FadingUtils.fadeInBalloon(balloonTip, null, 200, 24);
                 try {
-                    java.lang.Thread.sleep(4000);
+                    java.lang.Thread.sleep(time);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
                 }

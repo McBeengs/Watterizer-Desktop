@@ -20,6 +20,7 @@ import aurelienribon.slidinglayout.SLPanel;
 import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.net.SocketNodeJS;
 import com.watterizer.util.UsefulMethods;
+import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -52,6 +53,7 @@ import org.json.JSONObject;
 
 public class MeasurerPanel extends SLPanel {
 
+    private XmlManager xml;
     private ArduinoBridge arduinoBridge;
     private SocketNodeJS socket;
     private JFreeChart chart;
@@ -66,9 +68,10 @@ public class MeasurerPanel extends SLPanel {
     public MeasurerPanel() throws IOException {
         initComponents();
         //arduinoBridge = UsefulMethods.getArduinoInstance();
+        xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
         socket = new SocketNodeJS();
         try {
-            socket.socketConnect("10.0.4.70", 3000);
+            socket.socketConnect(xml.getContentByName("webServiceHost", 0), Integer.parseInt(xml.getContentByName("socketPort", 0)));
         } catch (IOException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -110,7 +113,7 @@ public class MeasurerPanel extends SLPanel {
                         Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                
+
 //                arduinoBridge.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
 //                    String console = evt.getConsoleOutput();
 //                    double r = parseConsole(console, "a0");
@@ -126,7 +129,7 @@ public class MeasurerPanel extends SLPanel {
 //                });
             }
         }.start();
-        
+
         new Thread() {
             @Override
             public void run() {

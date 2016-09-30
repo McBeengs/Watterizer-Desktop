@@ -68,16 +68,17 @@ public class XmlManager {
             filePath = path;
             File xml = new File(path);
             fileReader = new FileReader(xml);
-            BufferedReader reader = new BufferedReader(fileReader);
-            content = reader.readLine();
+            try (BufferedReader reader = new BufferedReader(fileReader)) {
+                content = reader.readLine();
 
-            while (!content.endsWith("null")) {
-                content += "\n";
-                content += reader.readLine();
+                while (!content.endsWith("null")) {
+                    content += "\n";
+                    content += reader.readLine();
+                }
+
+                //Removes the "null" occurence of the XML
+                content = content.substring(0, content.length() - 5);
             }
-
-            //Removes the "null" occurence of the XML
-            content = content.substring(0, content.length() - 5);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(XmlManager.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -652,7 +653,7 @@ public class XmlManager {
         }
 
         newXml.createNewFile();
-        FileUtils.writeStringToFile(newXml, content,Charset.defaultCharset());
+        FileUtils.writeStringToFile(newXml, content, Charset.defaultCharset());
     }
 
     /**

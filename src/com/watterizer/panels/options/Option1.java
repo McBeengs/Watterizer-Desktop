@@ -133,7 +133,7 @@ public class Option1 extends javax.swing.JPanel {
 
     private void languageSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageSelectorActionPerformed
         if (languageSelector.getSelectedIndex() != languageActive) {
-            UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", Color.yellow);
+            UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", 3000, Color.yellow);
         }
 
         xml.setContentByAttribute("language", "attr", 0, "" + languageSelector.getSelectedIndex());
@@ -142,7 +142,7 @@ public class Option1 extends javax.swing.JPanel {
 
     private void styleSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_styleSelectorActionPerformed
         if (styleSelector.getSelectedIndex() != styleSelected) {
-            UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", Color.yellow);
+            UsefulMethods.makeBalloon(styleSelector, "The program must be restarted", 3000, Color.yellow);
         }
 
         xml.setContentByAttribute("style", "attr", 0, "" + styleSelector.getSelectedIndex());

@@ -1,4 +1,4 @@
-package com.watterizer.util;
+package com.watterizer.models;
 
 import java.sql.Time;
 

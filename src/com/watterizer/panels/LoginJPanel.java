@@ -9,7 +9,7 @@ import com.watterizer.modals.MainJFrame;
 import com.watterizer.crypto.Encrypter;
 import com.watterizer.util.OpaqueScreen;
 import com.watterizer.util.UsefulMethods;
-import com.watterizer.util.UserModel;
+import com.watterizer.models.UserModel;
 import com.watterizer.xml.XmlManager;
 import java.awt.AlphaComposite;
 import java.awt.Color;

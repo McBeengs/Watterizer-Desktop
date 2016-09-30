@@ -31,7 +31,7 @@ public class Starter {
     public static void main(String[] args) throws IOException, InterruptedException {
         Locale.setDefault(new Locale("pt", "BR"));
         String separator = File.separator;
-        
+
         UIManager.put("ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI");
         UIManager.put("ProgressBar.cellLength", Integer.MAX_VALUE);
         UIManager.put("ProgressBar.foreground", new Color(51, 153, 255));
@@ -43,10 +43,13 @@ public class Starter {
         UIManager.put("Separator.foreground", new Color(255, 200, 20));
         UIManager.put("Separator.background", new Color(255, 200, 20));
         UIManager.put("TreeUI", "javax.swing.plaf.metal.MetalTreeUI");
-        UIManager.put("ComboBox.background", new Color(255, 200, 20));
         UIManager.put("Button.background", new Color(255, 200, 20));
         UIManager.put("Button.select", new Color(255, 220, 20));
-        UIManager.put("ComboBox.buttonBackground", new Color(255, 220, 20));
+        //UIManager.put("ComboBox.background", new Color(255, 200, 20));
+        //UIManager.put("ComboBox.buttonBackground", new Color(255, 220, 20));
+        UIManager.put("RadioButton.foreground", Color.white);
+        UIManager.put("RadioButton.focus", Color.yellow);
+        UIManager.put("RadioButton.background", Color.black);
         UIManager.put("Button.font", new Font("Tahoma", Font.PLAIN, 11));
         UIManager.put("OptionPane.messageForeground", Color.white);
         UIManager.put("OptionPane.background", Color.black);
