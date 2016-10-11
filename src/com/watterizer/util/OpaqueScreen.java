@@ -42,21 +42,6 @@ public class OpaqueScreen {
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(0);
 
-        Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
-
-        new Thread() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
-                    } catch (IOException | InterruptedException ex) {
-                        Logger.getLogger(OpaqueScreen.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        }.start();
-
         ContentPane pane = new ContentPane();
 
         if (component != null) {

@@ -23,21 +23,21 @@ import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.AWTException;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.GridLayout;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -45,6 +45,8 @@ import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import org.joda.time.LocalTime;
+import org.joda.time.Period;
 
 public class MainJFrame extends javax.swing.JFrame {
 
@@ -57,10 +59,22 @@ public class MainJFrame extends javax.swing.JFrame {
         initComponents();
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
 
-        addKeyListener(new KeyAdapter() {
+        addWindowListener(new WindowAdapter() {
             @Override
-            public void keyPressed(KeyEvent e) {
-
+            public void windowClosing(WindowEvent we) {
+                try {
+                    Period period = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getCurrentUserModel().getHoraIntervalo().getTime());
+                    if (period.getSeconds() < 0) {
+                        period = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getCurrentUserModel().getHoraSaida().getTime());
+                        if (period.getSeconds() < 0) {
+                            
+                        } else {
+                            System.out.println("faltam " + period.getHours() + " horas, " + period.getMinutes() + " minutos e " + period.getSeconds()+ " segundos");
+                        }
+                    }
+                } catch (Exception ex) {
+                    Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -104,12 +118,9 @@ public class MainJFrame extends javax.swing.JFrame {
             });
         }
 
-        getContentPane().setBackground(Color.BLACK);
-        mainPanel.setLayout(new GridLayout(0, 1));
-
         measurerPanel = new MeasurerPanel();
         measurerPanel.setVisible(true);
-        mainPanel.add(measurerPanel);
+        mainTabbedPane.addTab("Medidor 1", measurerPanel);
 
         try {
             iconDisplayer.setIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid1.png"))));
@@ -122,33 +133,20 @@ public class MainJFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        mainPanel = new javax.swing.JPanel();
         jSeparator2 = new javax.swing.JSeparator();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         iconDisplayer = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        mainTabbedPane = new javax.swing.JTabbedPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenu2 = new javax.swing.JMenu();
         optionsItem = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(900, 550));
-
-        mainPanel.setBackground(new java.awt.Color(0, 0, 0));
-
-        javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
-        mainPanel.setLayout(mainPanelLayout);
-        mainPanelLayout.setHorizontalGroup(
-            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 808, Short.MAX_VALUE)
-        );
-        mainPanelLayout.setVerticalGroup(
-            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 420, Short.MAX_VALUE)
-        );
 
         jSeparator2.setBackground(new java.awt.Color(255, 200, 20));
         jSeparator2.setForeground(new java.awt.Color(255, 200, 20));
@@ -188,7 +186,7 @@ public class MainJFrame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(22, 22, 22)
                 .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 489, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -235,9 +233,9 @@ public class MainJFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jSeparator2)
+            .addComponent(mainTabbedPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -246,7 +244,7 @@ public class MainJFrame extends javax.swing.JFrame {
                 .addGap(4, 4, 4)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(mainTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE))
         );
 
         pack();
@@ -275,11 +273,11 @@ public class MainJFrame extends javax.swing.JFrame {
                     if (JOptionPane.showConfirmDialog(null, "Deseja fazer o logout?", "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         try {
                             String s = "{\n"
-                                    + "\"token\":\"" + UsefulMethods.getCurrentUserModel().getToken() + "\"\n"
+                                    + "\"token\":\"" + UsefulMethods.getCurrentUserModel().getTokenDesktop() + "\"\n"
                                     + "}";
-                            
+
                             UsefulMethods.getWebServiceResponse(xml.getContentByName("webServiceHost", 0) + "/logout", "GET", s);
-                            
+
                             System.exit(0);
                         } catch (ProtocolException ex) {
                             Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -304,7 +302,7 @@ public class MainJFrame extends javax.swing.JFrame {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JPanel mainPanel;
+    private javax.swing.JTabbedPane mainTabbedPane;
     private javax.swing.JMenuItem optionsItem;
     // End of variables declaration//GEN-END:variables
 

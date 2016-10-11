@@ -11,12 +11,14 @@ public class UserModel {
     private String nome;
     private String telefone;
     private Time horaEntrada;
+    private Time horaSaida;
     private Time horaIntervalo;
-    private Time expediente;
+    private String perfil;
     private int idPerfil;
+    private int idSetor;
     private int idPergunta;
     private String respostaPergunta;
-    private String token;
+    private String tokenDesktop;
 
     public int getId() {
         return id;
@@ -90,14 +92,6 @@ public class UserModel {
         this.idPerfil = idPerfil;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
     public Time getHoraEntrada() {
         return horaEntrada;
     }
@@ -114,11 +108,35 @@ public class UserModel {
         this.horaIntervalo = horaIntervalo;
     }
 
-    public Time getExpediente() {
-        return expediente;
+    public Time getHoraSaida() {
+        return horaSaida;
     }
 
-    public void setExpediente(Time expediente) {
-        this.expediente = expediente;
+    public void setHoraSaida(Time horaSaida) {
+        this.horaSaida = horaSaida;
+    }
+
+    public String getPerfil() {
+        return perfil;
+    }
+
+    public void setPerfil(String perfil) {
+        this.perfil = perfil;
+    }
+
+    public int getIdSetor() {
+        return idSetor;
+    }
+
+    public void setIdSetor(int idSetor) {
+        this.idSetor = idSetor;
+    }
+
+    public String getTokenDesktop() {
+        return tokenDesktop;
+    }
+
+    public void setTokenDesktop(String tokenDesktop) {
+        this.tokenDesktop = tokenDesktop;
     }
 }

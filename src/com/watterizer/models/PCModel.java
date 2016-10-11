@@ -11,7 +11,49 @@ package com.watterizer.models;
  */
 public class PCModel {
     
-    private String nome;
-    private String mac;
-    //private String
+    private String nome = "";
+    private String mac = "";
+    private String setor = "";
+    private int setorId = 0;
+    private int type = 0;
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getMac() {
+        return mac;
+    }
+
+    public void setMac(String mac) {
+        this.mac = mac;
+    }
+
+    public String getSetor() {
+        return setor;
+    }
+
+    public void setSetor(String setor) {
+        this.setor = setor;
+    }
+
+    public int getSetorId() {
+        return setorId;
+    }
+
+    public void setSetorId(int setorId) {
+        this.setorId = setorId;
+    }
+    
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
 }

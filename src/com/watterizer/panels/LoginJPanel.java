@@ -15,20 +15,12 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.json.JSONException;
@@ -57,22 +49,9 @@ public class LoginJPanel extends javax.swing.JPanel {
 
             Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
 
-            new Thread() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
-                        } catch (IOException | InterruptedException ex) {
-                            Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                }
-            }.start();
-            
             OpaqueScreen screen = new OpaqueScreen();
             screen.setVisible(true);
-            
+
             if (JOptionPane.showConfirmDialog(screen.getRootFrame(), "Logar-se como \"" + userInput.getText() + "\"?") == JOptionPane.YES_OPTION) {
                 if (checkInput()) {
                     screen.close();
@@ -356,34 +335,14 @@ public class LoginJPanel extends javax.swing.JPanel {
             public void run() {
                 try {
                     xml.saveXml();
-                    URL url = new URL("http://10.0.4.70:1515/login");
-                    URLConnection con = url.openConnection();
-                    HttpURLConnection http = (HttpURLConnection) con;
-                    http.setRequestMethod("POST");
-                    http.setDoOutput(true);
 
                     String s = "{\n"
                             + "\"login\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, userInput.getText()) + "\",\n"
                             + "\"senha\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, new String(passInput.getPassword())) + "\"\n"
                             + "}";
-                    byte[] out = s.getBytes(StandardCharsets.UTF_8);
-                    int length = out.length;
-
-                    http.setFixedLengthStreamingMode(length);
-                    http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                    http.connect();
-                    try (OutputStream os = http.getOutputStream()) {
-                        os.write(out);
-                    }
-
-                    BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
-                    StringBuilder sb = new StringBuilder();
-                    String output;
-                    while ((output = br.readLine()) != null) {
-                        sb.append(output);
-                    }
-
-                    String json = Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, sb.toString());
+                    String result = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
+                            + xml.getContentByName("webServicePort", 0) + "/login", "POST", s);
+                    String json = Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, result);
                     json = json.substring(1, json.length() - 1);
                     try {
                         JSONObject obj = new JSONObject(json);
@@ -394,14 +353,15 @@ public class LoginJPanel extends javax.swing.JPanel {
                         model.setEmail(obj.getString("email"));
                         model.setNome(obj.getString("nome"));
                         model.setTelefone(obj.getString("telefone"));
+                        model.setPerfil(obj.getString("perfil"));
                         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
                         model.setHoraEntrada(new Time(sdf.parse(obj.getString("hora_entrada")).getTime()));
                         model.setHoraIntervalo(new Time(sdf.parse(obj.getString("hora_intervalo")).getTime()));
-                        model.setExpediente(new Time(sdf.parse(obj.getString("expediente")).getTime()));
+                        model.setHoraSaida(new Time(sdf.parse(obj.getString("hora_saida")).getTime()));
                         model.setIdPergunta(obj.getInt("id_pergunta"));
                         model.setRespostaPergunta(obj.getString("resposta_pergunta"));
                         model.setIdPerfil(obj.getInt("id_perfil"));
-                        model.setToken(obj.getString("token"));
+                        model.setTokenDesktop(obj.getString("token_desktop"));
                         UsefulMethods.setCurrentUserModel(model);
 
                         new MainJFrame().setVisible(true);
@@ -411,6 +371,7 @@ public class LoginJPanel extends javax.swing.JPanel {
                         errorLog.setText("Login inválido");
                         paintInput(0, 1);
                         paintInput(1, 1);
+                        ex.printStackTrace();
                     }
 
                     userInput.setEnabled(true);
@@ -423,6 +384,10 @@ public class LoginJPanel extends javax.swing.JPanel {
                 }
             }
         }.start();
+    }
+    
+    private JPanel getPanel() {
+        return this;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -149,12 +149,12 @@ public class SplashScreen extends javax.swing.JFrame {
 
         } catch (Exception ex) {
             OpaqueScreen screen = new OpaqueScreen();
-            
+
             switch (ex.getMessage()) {
                 case "Arduino":
                     GenericErrorJPanel arduino = new GenericErrorJPanel(screen, language.getContentById("failure").replace("&string", "o Arduino"),
                             GenericErrorJPanel.ERROR_MESSAGE, errorDetail, GenericErrorJPanel.OK_RETRY);
-                    
+
                     arduino.setRightButtonAction((ActionEvent e) -> {
                         arduino.disposeWindow();
                         screen.close();
@@ -181,7 +181,7 @@ public class SplashScreen extends javax.swing.JFrame {
                 case "Internet":
                     GenericErrorJPanel internet = new GenericErrorJPanel(screen, language.getContentById("failure").replace("&string", "a Internet"),
                             GenericErrorJPanel.ALERT_MESSAGE, errorDetail, GenericErrorJPanel.OK_RETRY);
-                    
+
                     internet.setRightButtonAction((ActionEvent e) -> {
                         internet.disposeWindow();
                         screen.close();
@@ -208,7 +208,7 @@ public class SplashScreen extends javax.swing.JFrame {
                 case "DB":
                     GenericErrorJPanel db = new GenericErrorJPanel(screen, language.getContentById("failure").replace("&string", "o Banco de Dados"),
                             GenericErrorJPanel.ALERT_MESSAGE, errorDetail, GenericErrorJPanel.OK_RETRY);
-                    
+
                     db.setRightButtonAction((ActionEvent e) -> {
                         db.disposeWindow();
                         screen.close();
@@ -228,7 +228,7 @@ public class SplashScreen extends javax.swing.JFrame {
                         }.start();
                         screen.close();
                     });
-                    
+
                     screen.setRootFrame(db);
                     screen.setVisible(true);
                     break;
@@ -260,12 +260,12 @@ public class SplashScreen extends javax.swing.JFrame {
         } else {
             infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
             infoDisplayer.setText(language.getContentById("testArduino"));
-            try {
-                UsefulMethods.getArduinoInstance();
-            } catch (IOException ex) {
-                errorDetail = language.getContentById("arduinoFailure");
-                throw new Exception("Arduino");
-            }
+//            try {
+//                UsefulMethods.getArduinoInstance();
+//            } catch (IOException ex) {
+//                errorDetail = language.getContentById("arduinoFailure");
+//                throw new Exception("Arduino");
+//            }
             for (int i = 0; i < 30; i++) {
                 jProgressBar1.setValue(i);
                 Thread.sleep(10);
@@ -286,7 +286,8 @@ public class SplashScreen extends javax.swing.JFrame {
             }
 
             try {
-                System.out.println(UsefulMethods.getWebServiceResponse(xml.getContentByName("webServiceHost", 0) + "/test", "GET", null));
+                System.out.println(UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
+                        + xml.getContentByName("webServicePort", 0) + "/test", "GET", null));
             } catch (Exception ex) {
                 errorDetail = language.getContentById("dbFailure");
                 throw new Exception("DB");

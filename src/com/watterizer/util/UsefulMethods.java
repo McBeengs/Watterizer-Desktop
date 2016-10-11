@@ -18,7 +18,6 @@ package com.watterizer.util;
 
 import com.watterizer.models.UserModel;
 import com.watterizer.arduino.ArduinoBridge;
-import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -91,7 +90,6 @@ public class UsefulMethods {
         }
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<root>\n"
                 + "    <gui>\n"
                 + "        <language attr=\"0\">Português</language>\n"
@@ -99,6 +97,7 @@ public class UsefulMethods {
                 + "        <webServiceHost>http://localhost</webServiceHost>\n"
                 + "        <webServicePort>12345</webServicePort>\n"
                 + "        <socketPort>12345</socketPort>\n"
+                + "        <terminalType>0</terminalType>\n"
                 + "        <autoLogin>false</autoLogin>\n"
                 + "        <user></user>\n"
                 + "        <pass></pass>\n"
@@ -136,6 +135,11 @@ public class UsefulMethods {
     }
 
     public static String getWebServiceResponse(String url, String method, String json) throws MalformedURLException, ProtocolException, IOException {
+        return getWebServiceResponse(url, method, null, null, json);
+    }
+
+    public static String getWebServiceResponse(String url, String method, String[] requestKeys,
+            String[] requestValues, String json) throws MalformedURLException, ProtocolException, IOException {
         URL u = new URL(url);
         URLConnection con = u.openConnection();
         HttpURLConnection http = (HttpURLConnection) con;
@@ -144,7 +148,7 @@ public class UsefulMethods {
         String output;
         StringBuilder sb;
 
-        if (json != null) {
+        if (json != null && requestKeys == null && requestValues == null) {
             byte[] out = json.getBytes(StandardCharsets.UTF_8);
             int length = out.length;
 
@@ -160,6 +164,45 @@ public class UsefulMethods {
             while ((output = br.readLine()) != null) {
                 sb.append(output);
             }
+
+            return sb.toString();
+        } else if (requestKeys != null && requestValues != null && requestKeys.length == requestValues.length) {
+            if (json != null) {
+                byte[] out = json.getBytes(StandardCharsets.UTF_8);
+                int length = out.length;
+
+                http.setFixedLengthStreamingMode(length);
+                for (int i = 0; i < requestKeys.length; i++) {
+                    System.out.println("Key: " + requestKeys[i] + " | Value: " + requestValues[i]);
+                    http.setRequestProperty(requestKeys[i], requestValues[i]);
+                }
+
+                http.connect();
+                try (OutputStream os = http.getOutputStream()) {
+                    os.write(out);
+                }
+
+                BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+                sb = new StringBuilder();
+                while ((output = br.readLine()) != null) {
+                    sb.append(output);
+                }
+
+                return sb.toString();
+            } else {
+                for (int i = 0; i < requestKeys.length; i++) {
+                    http.setRequestProperty(requestKeys[i], requestValues[i]);
+                }
+                http.connect();
+
+                BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
+                sb = new StringBuilder();
+                while ((output = br.readLine()) != null) {
+                    sb.append(output);
+                }
+
+                return sb.toString();
+            }
         } else {
             http.connect();
             BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
@@ -167,9 +210,9 @@ public class UsefulMethods {
             while ((output = br.readLine()) != null) {
                 sb.append(output);
             }
+            
+            return sb.toString();
         }
-
-        return sb.toString();
     }
 
     public static XmlManager getManagerInstance(int manager) {

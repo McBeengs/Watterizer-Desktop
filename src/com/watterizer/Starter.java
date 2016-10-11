@@ -8,19 +8,29 @@ package com.watterizer;
 import com.watterizer.modals.FirstUseSetupJFrame;
 import com.watterizer.modals.SplashScreen;
 import com.watterizer.panels.GenericErrorJPanel;
+import com.watterizer.panels.LoginJPanel;
 import com.watterizer.util.OpaqueScreen;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.Painter;
 import javax.swing.UIManager;
+import sun.tools.jconsole.LocalVirtualMachine;
 
 /**
  *
@@ -31,6 +41,19 @@ public class Starter {
     public static void main(String[] args) throws IOException, InterruptedException {
         Locale.setDefault(new Locale("pt", "BR"));
         String separator = File.separator;
+
+        new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
+                    } catch (IOException | InterruptedException ex) {
+                        Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        }.start();
 
         UIManager.put("ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI");
         UIManager.put("ProgressBar.cellLength", Integer.MAX_VALUE);
@@ -56,6 +79,34 @@ public class Starter {
         UIManager.put("OptionPane.opaque", false);
         UIManager.put("OptionPane.sameSizeButtons", true);
         UIManager.put("Panel.background", Color.black);
+
+        UIManager.put("Panel.background", Color.black);
+        UIManager.put("Panel.background", Color.black);
+        UIManager.put("Panel.background", Color.black);
+        UIManager.put("Panel.background", Color.black);
+        UIManager.put("Panel.background", Color.black);
+        UIManager.put("TabbedPane.borderHightlightColor", Color.black);
+        UIManager.put("TabbedPane.darkShadow", Color.black);
+        UIManager.put("TabbedPane.light", Color.black);
+        UIManager.put("TabbedPane.darkShadow", Color.black);
+        UIManager.put("TabbedPane.focus", Color.black);
+        UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        UIManager.put("TabbedPane.selectHighlight", Color.black);
+        UIManager.put("TabbedPane.font", UsefulMethods.getHeaderFont());
+        UIManager.put("TabbedPane.tabsOpaque", true);
+
+        final Map<Integer, LocalVirtualMachine> virtualMachines = LocalVirtualMachine.getAllVirtualMachines();
+        int isRunning = 0;
+        for (final Entry<Integer, LocalVirtualMachine> entry : virtualMachines.entrySet()) {
+            if (!entry.getValue().displayName().isEmpty()) {
+                if (entry.getValue().displayName().equals("com.watterizer.Starter") && isRunning < 1) {
+                    isRunning++;
+                } else {
+                    JOptionPane.showMessageDialog(null, "O aplicativo \"Watterizer\" já está em execução.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                }
+            }
+        }
 
         File getConfig = new File(UsefulMethods.getClassPath(SplashScreen.class) + separator + "config");
         if (!getConfig.exists()) {

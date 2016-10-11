@@ -7,16 +7,16 @@ package com.watterizer.modals;
 
 import com.watterizer.models.PCModel;
 import com.watterizer.net.SocketNodeJS;
-import com.watterizer.panels.SelectConfig;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -27,9 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ProtocolException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -39,7 +38,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import org.json.JSONArray;
+import javax.swing.event.CaretEvent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -52,9 +51,12 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     private static XmlManager xml;
     private PCModel model;
     private final GridBagConstraints c = new GridBagConstraints();
-    private JButton previous = new JButton();
-    private JButton next = new JButton();
+    private final JButton previous = new JButton();
+    private final JButton next = new JButton();
     private int currentPanel = 0;
+    boolean isMacSelected = false;
+    boolean isSetorSelected = false;
+    boolean isLastScreen = false;
 
     public FirstUseSetupJFrame(XmlManager xml) {
         initComponents();
@@ -71,6 +73,32 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
         next.addActionListener((ActionEvent ae) -> {
             nextPanel();
+            if (isLastScreen) {
+                try {
+                    xml.setContentByName("user", 0, "a");
+                    xml.setContentByName("pass", 0, "a");
+                    xml.saveXml();
+                    System.out.println(xml.toString());
+                    System.out.println("salvo xml");
+                    if (model != null) {
+                        String s = "{"
+                                + "   \"mac\":\"" + model.getMac() + "\", "
+                                + "   \"nome\":\"" + model.getNome() + "\", "
+                                + "   \"id_setor\":\"" + model.getSetorId() + "\", "
+                                + "   \"has_arduino\":\"" + model.getType() + "\", "
+                                + "   \"command\":\"create\""
+                                + "}";
+                        UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/pccheck", "POST", s);
+                        System.out.println("salvo no banco");
+                    } else {
+                        System.err.println("pulado salvar banco");
+                    }
+                    System.err.println("abrir watt_exec.jar");
+                    System.exit(0);
+                } catch (IOException ex) {
+                    Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         });
 
         this.addWindowListener(new WindowAdapter() {
@@ -147,42 +175,68 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     private void previousPanel() {
         currentPanel--;
         contentPane.removeAll();
+        isLastScreen = false;
 
-        switch (currentPanel) {
-            case 1:
-                EventQueue.invokeLater(() -> {
-                    contentPane.add(getWebServiceConnPanel(), c);
-                    contentPane.revalidate();
-                    contentPane.repaint();
-                });
-                previous.setEnabled(false);
-                break;
-            case 2:
-                
-                break;
+        if (currentPanel == 1) {
+            EventQueue.invokeLater(() -> {
+                contentPane.add(getWebServiceConnPanel(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
+            previous.setEnabled(false);
+        } else if (currentPanel == 2) {
+            EventQueue.invokeLater(() -> {
+                contentPane.add(getTerminalPanel(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
         }
     }
 
     private void nextPanel() {
         currentPanel++;
         next.setEnabled(false);
+        next.setText("Próximo");
         contentPane.removeAll();
-        switch (currentPanel) {
-            case 1:
-                EventQueue.invokeLater(() -> {
-                    contentPane.add(getWebServiceConnPanel(), c);
+
+        if (currentPanel == 1) {
+            EventQueue.invokeLater(() -> {
+                contentPane.add(getWebServiceConnPanel(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
+        } else if (currentPanel == 2) {
+            EventQueue.invokeLater(() -> {
+                JPanel pane = getTerminalPanel();
+                if (pane == null) {
+                    contentPane.removeAll();
+                    EventQueue.invokeLater(() -> {
+                        previous.setEnabled(false);
+                        next.setEnabled(true);
+                        isLastScreen = true;
+                        next.setText("Sair");
+                        contentPane.add(getEndPanel(), c);
+                        contentPane.revalidate();
+                        contentPane.repaint();
+                    });
+                } else {
+                    contentPane.add(pane, c);
                     contentPane.revalidate();
                     contentPane.repaint();
-                });
-                break;
-            case 2:
-                EventQueue.invokeLater(() -> {
-                    contentPane.add(getTerminalPanel(), c);
-                    contentPane.revalidate();
-                    contentPane.repaint();
-                });
-                previous.setEnabled(true);
-                break;
+                }
+            });
+            previous.setEnabled(true);
+        } else if (!isLastScreen && currentPanel == 3 && model.getType() == 1) {
+            EventQueue.invokeLater(() -> {
+                next.setEnabled(true);
+                isLastScreen = true;
+                next.setText("Sair");
+                contentPane.add(getEndPanel(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
+        } else if (!isLastScreen && currentPanel == 3 && model.getType() == 0) {
+
         }
     }
 
@@ -196,114 +250,20 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         }
     }
 
-    private JPanel getSelectConfigPanel() {
-        JPanel pane = new JPanel();
-        javax.swing.ButtonGroup buttonGroup1 = new javax.swing.ButtonGroup();
-        javax.swing.JLabel errorText = new javax.swing.JLabel();
-        javax.swing.JRadioButton jRadioButton1 = new javax.swing.JRadioButton();
-        javax.swing.JRadioButton jRadioButton2 = new javax.swing.JRadioButton();
-        javax.swing.JLabel errorTitle = new javax.swing.JLabel();
-        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
-
-        errorText.setForeground(new java.awt.Color(255, 255, 255));
-        errorText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        errorText.setText("De qual modo este terminal deve ser configurado?");
-        errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-
-        jRadioButton1.setBackground(new java.awt.Color(0, 0, 0));
-        buttonGroup1.add(jRadioButton1);
-        jRadioButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jRadioButton1.setText("Seeder");
-
-        jRadioButton2.setBackground(new java.awt.Color(0, 0, 0));
-        buttonGroup1.add(jRadioButton2);
-        jRadioButton2.setForeground(new java.awt.Color(255, 255, 255));
-        jRadioButton2.setText("Leecher");
-
-        Font header = UsefulMethods.getHeaderFont();
-        header = header.deriveFont(Font.PLAIN, 40);
-        errorTitle.setFont(header);
-        errorTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        errorTitle.setText("Configuração Básica");
-
-        jLabel1.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent me) {
-                UsefulMethods.makeBalloon(jLabel1, "<html><body>Computadores onde a unidade Arduino será instalada<br>recebem o nome de \"Seeders\". Já aqueles"
-                        + " que serão<br>usados sem realizar a medição, recebem o nome de \"Leechers\".</html></body>", 5000, Color.yellow);
-            }
-        });
-
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/question.png"))); // NOI18N
-
-        next.setText("Próximo");
-
-        previous.setText("Anterior");
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
-        pane.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addGap(88, 88, 88)
-                        .addComponent(jRadioButton1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jRadioButton2)
-                        .addContainerGap())
-                .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                        .addGap(65, 65, 65)
-                                        .addComponent(errorText)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(jLabel1))
-                                .addGroup(layout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(errorTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(previous)
-                                        .addGap(428, 428, 428)
-                                        .addComponent(next)))
-                        .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(errorTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(errorText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jRadioButton1)
-                                .addComponent(jRadioButton2))
-                        .addGap(170, 170, 170)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(next)
-                                .addComponent(previous))
-                        .addContainerGap())
-        );
-
-        return pane;
-    }
-
     private JPanel getWelcomePanel() {
         JPanel pane = new JPanel();
-        javax.swing.JLabel errorText = new javax.swing.JLabel();
-        javax.swing.JLabel errorTitle = new javax.swing.JLabel();
+        javax.swing.JLabel text = new javax.swing.JLabel();
+        javax.swing.JLabel top = new javax.swing.JLabel();
 
-        errorText.setForeground(new java.awt.Color(255, 255, 255));
-        errorText.setText("<html><body style=\"text-align: justify;\">    Seja bem vindo ao auxiliar de configuração para a aplicação Watterizer. Clique em \"Próximo\" para continuar</body></html>");
-        errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        text.setForeground(new java.awt.Color(255, 255, 255));
+        text.setText("<html><body style=\"text-align: justify;\">    Seja bem vindo ao auxiliar de configuração para a aplicação Watterizer. Clique em \"Próximo\" para continuar</body></html>");
+        text.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         Font header = UsefulMethods.getHeaderFont();
         header = header.deriveFont(Font.PLAIN, 40);
-        errorTitle.setFont(header);
-        errorTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        errorTitle.setText("Bem Vindo");
+        top.setFont(header);
+        top.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        top.setText("Bem Vindo");
 
         next.setText("Próximo");
 
@@ -315,24 +275,24 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(errorTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(top, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(text, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addGap(0, 0, Short.MAX_VALUE)
                                         .addComponent(previous)
-                                        .addGap(428, 428, 428)
-                                        .addComponent(next))
-                                .addComponent(errorText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(next)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(errorTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10)
-                        .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addComponent(top, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(text, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(177, 177, 177)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(next)
                                 .addComponent(previous))
@@ -357,7 +317,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         javax.swing.JLabel display = new javax.swing.JLabel();
 
         errorText.setForeground(new java.awt.Color(255, 255, 255));
-        errorText.setText("<html><body style=\"text-align: justify;\">    Antes de mais nada, precisamos estabelecer uma conexão entre o servidor para que as etapas seguintes "
+        errorText.setText("<html><body style=\"text-align: justify;\">   Antes de mais nada, precisamos estabelecer uma conexão entre o servidor para que as etapas seguintes "
                 + "sejam configuradas. Caso não saiba os campos abaixo, entre em contato com o responsável pela arquitetura do sistema.</body></html>");
         errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
@@ -371,6 +331,45 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         errorText1.setText("Url:");
 
         jTextField1.setText("10.0.4.70");
+        jTextField1.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (c == ' ') {
+                    getToolkit().beep();
+                    e.consume();
+                }
+            }
+
+        });
+//        jTextField1.addKeyListener(new KeyAdapter() {
+//            @Override
+//            public void keyTyped(KeyEvent e) {
+//                int dots = 0;
+//                for (char c : jTextField1.getText().toCharArray()) {
+//                    if (c == '.') {
+//                        dots++;
+//                        if (dots == 4) {
+//                            getToolkit().beep();
+//                            e.consume();
+//                        }
+//                    }
+//                }
+//                char c = e.getKeyChar();
+//                if (!((c >= '0') && (c <= '9')
+//                        || (c == KeyEvent.VK_BACK_SPACE)
+//                        || (c == KeyEvent.VK_DELETE)
+//                        || (c == '.'))) {
+//                    getToolkit().beep();
+//                    e.consume();
+//                }
+//
+//                if (jTextField1.getText().length() >= 14) {
+//                    jTextField1.setText(jTextField1.getText().substring(0, 14));
+//                }
+//            }
+//
+//        });
 
         errorText2.setForeground(new java.awt.Color(255, 255, 255));
         errorText2.setText("Porta Socket:");
@@ -378,16 +377,43 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         jTextField2.setText("3000");
         jTextField2.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyPressed(KeyEvent ke) {
-                int[] keys = new int[]{97, 98, 99, 100, 101, 102, 103, 104, 105, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48};
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!((c >= '0') && (c <= '9')
+                        || (c == KeyEvent.VK_BACK_SPACE)
+                        || (c == KeyEvent.VK_DELETE))) {
+                    getToolkit().beep();
+                    e.consume();
+                }
 
+                if (jTextField2.getText().length() >= 5) {
+                    jTextField2.setText(jTextField2.getText().substring(0, 4));
+                }
             }
+
         });
 
         errorText3.setForeground(new java.awt.Color(255, 255, 255));
         errorText3.setText("Porta WebService:");
 
         jTextField3.setText("1515");
+        jTextField3.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!((c >= '0') && (c <= '9')
+                        || (c == KeyEvent.VK_BACK_SPACE)
+                        || (c == KeyEvent.VK_DELETE))) {
+                    getToolkit().beep();
+                    e.consume();
+                }
+
+                if (jTextField3.getText().length() >= 5) {
+                    jTextField3.setText(jTextField3.getText().substring(0, 4));
+                }
+            }
+
+        });
 
         jButton1.setText("Testar");
         jButton1.addActionListener((ActionEvent ae) -> {
@@ -406,7 +432,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                         SocketNodeJS socket = new SocketNodeJS();
                         socket.socketConnect(jTextField1.getText(), Integer.parseInt(jTextField2.getText()));
 
-                        if (!socket.echo("test").isEmpty() && UsefulMethods.getWebServiceResponse("http://" + jTextField1.getText() + ":" + jTextField3.getText()
+                        if (!socket.echo("test").isEmpty() && UsefulMethods.getWebServiceResponse("http://" + jTextField1.getText().trim() + ":" + jTextField3.getText()
                                 + "/test", "GET", null).equals("OK")) {
                             display.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/ok.png")));
                             display.setForeground(new java.awt.Color(50, 205, 50));
@@ -422,7 +448,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
                             next.setEnabled(true);
                         }
-                    } catch (Exception ex) {
+                    } catch (NumberFormatException | IOException ex) {
                         display.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/error2.png")));
                         display.setForeground(new java.awt.Color(238, 44, 44));
                         display.setText("Falha com a conexão.");
@@ -492,7 +518,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                 .addComponent(jButton1))
                         .addGap(18, 18, 18)
                         .addComponent(display)
-                        .addGap(102, 102, 102)
+                        .addGap(101, 101, 101)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(next)
                                 .addComponent(previous))
@@ -502,9 +528,11 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         return pane;
     }
 
+    @SuppressWarnings("element-type-mismatch")
     private JPanel getTerminalPanel() {
         String pcName = "";
         ArrayList<String> macs = new ArrayList<>();
+        ArrayList<String> setoresDisplay = new ArrayList<>();
         Map<Integer, String> setores = new HashMap<>();
 
         try {
@@ -514,22 +542,22 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
             if (json.equals("false")) {
                 JOptionPane.showMessageDialog(this, "Não existe nenhum setor cadastrado no servidor. Por favor entre no módulo web e cadastre ao menos um para continuar.",
                         "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                Desktop.getDesktop().browse(new URI("http://" + xml.getContentByName("webServiceHost", 0) + ":1515"));
                 eraseConfig();
                 System.exit(0);
             } else {
                 json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
-                    .parseInt(xml.getContentByName("webServicePort", 0)) + "/setor", "GET", null);
-                
+                        .parseInt(xml.getContentByName("webServicePort", 0)) + "/setor", "GET", null);
+
                 json = json.substring(1, json.length() - 1);
-                setores.put(0, "- Selecione um Setor -");
-                int i = 1;
+                setoresDisplay.add("- Selecione um Setor -");
                 for (String s : json.split("},")) {
                     if (!s.endsWith("}")) {
                         s += "}";
                     }
                     JSONObject obj = new JSONObject(s);
                     setores.put(obj.getInt("id"), obj.getString("setor"));
-                    i++;
+                    setoresDisplay.add(obj.getString("setor"));
                 }
             }
 
@@ -548,35 +576,33 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                         sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
                     }
 
-                    macs.add(sb.toString());
-                    String s = "{"
-                            + "\"mac\" : \"" + sb.toString() + "\","
-                            + "\"command\" : \"check\""
-                            + "}";
-                    json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
-                            .parseInt(xml.getContentByName("webServicePort", 0)) + "/pccheck", "POST", s);
-                    json = json.substring(1, json.length() - 1);
-                    if (!json.isEmpty()) {
-                        isSaved = true;
-                        break;
+                    if (sb.toString().length() == 17) {
+                        macs.add(sb.toString());
+                        if (!isSaved) {
+                            String s = "{"
+                                    + "\"mac\" : \"" + sb.toString() + "\","
+                                    + "\"command\" : \"check\""
+                                    + "}";
+                            json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
+                                    .parseInt(xml.getContentByName("webServicePort", 0)) + "/pccheck", "POST", s);
+                            json = json.substring(1, json.length() - 1);
+                            if (!json.isEmpty()) {
+                                isSaved = true;
+                            }
+                        }
                     }
                 }
             }
 
             if (isSaved) {
-
+                if (JOptionPane.showConfirmDialog(null, getConfiguredTerminalPane(json), "Aviso",
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                    return null;
+                }
             }
 
             pcName = ip.getHostName();
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (SocketException ex) {
-            Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ProtocolException ex) {
-            Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (JSONException ex) {
+        } catch (NumberFormatException | IOException | HeadlessException | JSONException | URISyntaxException ex) {
             Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -597,7 +623,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         javax.swing.JRadioButton jRadioButton2 = new javax.swing.JRadioButton();
         javax.swing.JLabel info3 = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(0, 0, 0));
+        model = new PCModel();
 
         Font header = UsefulMethods.getHeaderFont();
         header = header.deriveFont(Font.PLAIN, 40);
@@ -606,7 +632,8 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         top.setText("Identicficar terminal");
 
         text.setForeground(new java.awt.Color(255, 255, 255));
-        text.setText("[text]");
+        text.setText("<html><body style=\"text-align: justify;\">   Para que as funções remotas possam ser utilizadas no módulo web, este terminal deve ser "
+                + "configurado com os requisitos abaixo.</html></body>");
 
         label1.setForeground(new java.awt.Color(255, 255, 255));
         label1.setText("MAC:");
@@ -623,6 +650,21 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         });
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(macs.toArray()));
+        jComboBox1.addActionListener((ActionEvent ae) -> {
+            if (jComboBox1.getSelectedItem().toString().equals("- Selecione um MAC -")) {
+                isMacSelected = false;
+                next.setEnabled(false);
+            } else {
+                model.setMac(jComboBox1.getSelectedItem().toString());
+                isMacSelected = true;
+                if (isSetorSelected && isMacSelected && !jTextField1.getText().isEmpty()) {
+                    next.setEnabled(true);
+                    xml.setContentByName("terminalType", 0, jRadioButton1.isSelected() ? "0" : "1");
+                } else {
+                    next.setEnabled(false);
+                }
+            }
+        });
 
         label2.setForeground(new java.awt.Color(255, 255, 255));
         label2.setText("Nome:");
@@ -637,23 +679,52 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         });
 
         jTextField1.setText(pcName);
+        model.setNome(jTextField1.getText());
+        jTextField1.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (jTextField1.getText().length() >= 50) {
+                    jTextField1.setText(jTextField1.getText().substring(0, 49));
+                }
+            }
+
+        });
+        jTextField1.addCaretListener((CaretEvent ce) -> {
+            if (jTextField1.getText().isEmpty()) {
+                next.setEnabled(false);
+            } else {
+                model.setNome(jTextField1.getText());
+                if (isMacSelected && isSetorSelected) {
+                    next.setEnabled(true);
+                    xml.setContentByName("terminalType", 0, jRadioButton1.isSelected() ? "0" : "1");
+                }
+            }
+        });
 
         label3.setForeground(new java.awt.Color(255, 255, 255));
         label3.setText("Setor:");
-        
-        String[] setoresDisplay = new String[setores.size()];
-        for (int i = 0; i < setoresDisplay.length; i++) {
-            setoresDisplay[i] = setores.get(i);
-        }
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(setoresDisplay));
+        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(setoresDisplay.toArray()));
         jComboBox2.addActionListener((ActionEvent ae) -> {
-            for(Object i : setores.keySet().toArray()){
+            if (jComboBox2.getSelectedItem().toString().equals("- Selecione um Setor -")) {
+                isSetorSelected = false;
+                next.setEnabled(false);
+                return;
+            }
+            for (Object i : setores.keySet().toArray()) {
                 if (setores.get(i).equals(jComboBox2.getSelectedItem().toString())) {
-                    System.err.println("Id: " + i);
-                    System.out.println("Setor: " + jComboBox2.getSelectedItem().toString());
+                    model.setSetor(jComboBox2.getSelectedItem().toString());
+                    model.setSetorId(Integer.parseInt(i.toString()));
+                    isSetorSelected = true;
                     break;
                 }
+            }
+
+            if (isSetorSelected && isMacSelected && !jTextField1.getText().isEmpty()) {
+                next.setEnabled(true);
+                xml.setContentByName("terminalType", 0, jRadioButton1.isSelected() ? "0" : "1");
+            } else {
+                next.setEnabled(false);
             }
             //jComboBox2.getSelectedItem().toString()
         });
@@ -664,9 +735,15 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         buttonGroup1.add(jRadioButton1);
         jRadioButton1.setSelected(true);
         jRadioButton1.setText("Seeder");
+        jRadioButton1.addActionListener((ActionEvent ae) -> {
+            model.setType(0);
+        });
 
         buttonGroup1.add(jRadioButton2);
         jRadioButton2.setText("Leecher");
+        jRadioButton2.addActionListener((ActionEvent ae) -> {
+            model.setType(1);
+        });
 
         info3.setForeground(new java.awt.Color(255, 255, 255));
         info3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -753,7 +830,162 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                         .addComponent(label4)
                                         .addComponent(jRadioButton1)
                                         .addComponent(jRadioButton2)))
-                        .addGap(96, 96, 96)
+                        .addGap(91, 91, 91)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(next)
+                                .addComponent(previous))
+                        .addContainerGap())
+        );
+
+        return pane;
+    }
+
+    private JPanel getConfiguredTerminalPane(String json) throws JSONException {
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel top = new javax.swing.JLabel();
+        javax.swing.JSeparator jSeparator1 = new javax.swing.JSeparator();
+        javax.swing.JLabel mac = new javax.swing.JLabel();
+        javax.swing.JLabel setor = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel6 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
+        javax.swing.JLabel arduino = new javax.swing.JLabel();
+        JPanel pane = new JPanel();
+
+        JSONObject obj = new JSONObject(json);
+
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/terminal.png"))); // NOI18N
+
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("Este terminal já foi cadastrado no banco de dados. Você deseja recadastrá-lo?");
+
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.PLAIN, 20);
+        top.setFont(header);
+        top.setForeground(new java.awt.Color(255, 255, 255));
+        top.setText(obj.getString("nome"));
+
+        mac.setForeground(new java.awt.Color(255, 255, 255));
+        mac.setText(obj.getString("mac"));
+
+        setor.setForeground(new java.awt.Color(255, 255, 255));
+        setor.setText(obj.getString("setor"));
+
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel7.setText("Setor:");
+
+        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel6.setText("MAC:");
+
+        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel8.setText("Arduino:");
+
+        arduino.setForeground(new java.awt.Color(255, 255, 255));
+        arduino.setText(obj.getInt("has_arduino") == 0 ? "Possui unidade configurada" : "Não configurado");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
+        pane.setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGap(33, 33, 33)
+                                        .addComponent(jLabel2)
+                                        .addGap(37, 37, 37)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(top, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addGap(10, 10, 10)
+                                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                                .addGroup(layout.createSequentialGroup()
+                                                                        .addComponent(jLabel6)
+                                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                        .addComponent(mac, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                                                .addGroup(layout.createSequentialGroup()
+                                                                        .addComponent(jLabel8)
+                                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                        .addComponent(arduino, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                                                .addGroup(layout.createSequentialGroup()
+                                                                        .addComponent(jLabel7)
+                                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                        .addComponent(setor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
+                                .addGroup(layout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addContainerGap())
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel1)
+                        .addGap(8, 8, 8)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel2)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addComponent(top, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(mac)
+                                                .addComponent(jLabel6))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jLabel7)
+                                                .addComponent(setor))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jLabel8)
+                                                .addComponent(arduino))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        return pane;
+    }
+
+    private JPanel getEndPanel() {
+        JPanel pane = new JPanel();
+        javax.swing.JLabel text = new javax.swing.JLabel();
+        javax.swing.JLabel top = new javax.swing.JLabel();
+
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.PLAIN, 40);
+        top.setFont(header);
+        top.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        top.setText("Configuração concluida");
+
+        text.setForeground(new java.awt.Color(255, 255, 255));
+        text.setText("<html><body style=\"text-align: justify;\">    A configuração foi concluida. Pressione \"Sair\" para finalizar o auxiliar e iniciar o programa.</html></body>");
+        text.setToolTipText("");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
+        pane.setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(top, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(text, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(previous)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(next)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(top, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(text, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(177, 177, 177)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(next)
                                 .addComponent(previous))

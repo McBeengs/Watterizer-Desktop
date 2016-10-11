@@ -84,10 +84,6 @@ public class MeasurerPanel extends SLPanel {
             }
         });
 
-        addMouseWheelListener((MouseWheelEvent mwe) -> {
-            System.out.println(mwe.getScrollAmount());
-        });
-
         new Thread() {
             @Override
             public void run() {
@@ -143,7 +139,6 @@ public class MeasurerPanel extends SLPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jSeparator1 = new javax.swing.JSeparator();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
 
@@ -160,26 +155,22 @@ public class MeasurerPanel extends SLPanel {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 249, Short.MAX_VALUE)
+            .addGap(0, 428, Short.MAX_VALUE)
         );
-
-        jSeparator1.setBackground(new java.awt.Color(255, 200, 20));
-        jSeparator1.setForeground(new java.awt.Color(255, 200, 20));
 
         Font header = UsefulMethods.getHeaderFont();
         header = header.deriveFont(Font.PLAIN, 33);
         jLabel1.setFont(header);
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Acelere, pah, pere, perrepetugamalepinogumalasinu");
+        jLabel1.setText("[text]");
 
         header = header.deriveFont(Font.PLAIN, 20);
         jLabel2.setFont(header);
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("- Sala 10");
+        jLabel2.setText("[text]");
         jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         setLayer(jPanel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        setLayer(jSeparator1, javax.swing.JLayeredPane.DEFAULT_LAYER);
         setLayer(jLabel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
         setLayer(jLabel2, javax.swing.JLayeredPane.DEFAULT_LAYER);
 
@@ -187,7 +178,6 @@ public class MeasurerPanel extends SLPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -207,10 +197,8 @@ public class MeasurerPanel extends SLPanel {
                     .addComponent(jLabel2)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(164, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -228,9 +216,13 @@ public class MeasurerPanel extends SLPanel {
 
     private void createChart() {
         try {
-            String json = UsefulMethods.getWebServiceResponse("http://10.0.4.70:1515/gasto/hoje/1", "GET", null);
+            String[] keys = new String[] {"Content-Type", "token"};
+            String[] values = new String[] {"application/json; charset=UTF-8", UsefulMethods.getCurrentUserModel().getTokenDesktop()};
+            
+            String json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
+                            + xml.getContentByName("webServicePort", 0) +"/dados/gasto/hoje/1", "GET", keys, values, null);
+            
             json = json.substring(1, json.length() - 1);
-
             if (!json.isEmpty()) {
                 json = "{" + json.replaceAll("\'", "\"") + "}";
                 JSONObject obj = new JSONObject(json);
@@ -307,6 +299,5 @@ public class MeasurerPanel extends SLPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 }
