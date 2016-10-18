@@ -20,7 +20,7 @@ public class Watterizer {
     static long time = System.currentTimeMillis();
     
     public static void main(String[] args) {
-        ArduinoBridge arduinoBridge = new ArduinoBridge();
+        ArduinoBridge arduinoBridge = new ArduinoBridge("COM8");
 
         System.out.println("Waiting connection...");
 

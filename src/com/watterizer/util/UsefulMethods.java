@@ -18,6 +18,7 @@ package com.watterizer.util;
 
 import com.watterizer.models.UserModel;
 import com.watterizer.arduino.ArduinoBridge;
+import com.watterizer.models.PCModel;
 import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -35,13 +36,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
 import java.net.ProtocolException;
+import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,13 +68,13 @@ public class UsefulMethods {
     public static final int OPTIONS = 0;
     public static final int LANGUAGE = 1;
     public static double CURRENT_KWH_CHARGE;
-    private static final long TIME_OF_OPENING = System.currentTimeMillis();
     private static XmlManager options;
     private static XmlManager language;
     private static ArduinoBridge bridge;
     private static FTPClient ftp;
     private static Font headerFont;
     private static UserModel model;
+    private static PCModel pc;
 
     public static String getOptions() {
         //get OS
@@ -94,13 +100,13 @@ public class UsefulMethods {
                 + "    <gui>\n"
                 + "        <language attr=\"0\">Português</language>\n"
                 + "        <style attr=\"0\">Metal</style>\n"
-                + "        <webServiceHost>http://localhost</webServiceHost>\n"
+                + "        <webServiceHost>localhost</webServiceHost>\n"
                 + "        <webServicePort>12345</webServicePort>\n"
                 + "        <socketPort>12345</socketPort>\n"
                 + "        <terminalType>0</terminalType>\n"
                 + "        <autoLogin>false</autoLogin>\n"
-                + "        <user></user>\n"
-                + "        <pass></pass>\n"
+                + "        <user>null</user>\n"
+                + "        <pass>null</pass>\n"
                 + "    </gui>\n"
                 + "    <debug>\n"
                 + "        <boolean id=\"isDebugActive\">false</boolean>\n"
@@ -122,12 +128,54 @@ public class UsefulMethods {
         return null;
     }
 
-    public static UserModel getCurrentUserModel() {
+    public static UserModel getUserModel() {
         return model;
     }
 
     public static void setCurrentUserModel(UserModel model) {
         UsefulMethods.model = model;
+    }
+
+    public static PCModel getPcModel() {
+        if (pc != null) {
+            return pc;
+        } else {
+            try {
+                pc = new PCModel();
+                InetAddress ip = InetAddress.getLocalHost();
+                Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
+                while (networks.hasMoreElements()) {
+                    NetworkInterface network = networks.nextElement();
+                    byte[] mac = network.getHardwareAddress();
+
+                    if (mac != null) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < mac.length; i++) {
+                            sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+                        }
+
+                        String json;
+                        if (sb.toString().length() == 17) {
+                            System.out.println(sb.toString());
+                            String s = "{"
+                                    + "\"mac\" : \"" + sb.toString() + "\","
+                                    + "\"command\" : \"check\""
+                                    + "}";
+                            json = getWebServiceResponse("http://" + getManagerInstance(OPTIONS).getContentByName("webServiceHost", 0) + ":" + Integer
+                                    .parseInt(getManagerInstance(OPTIONS).getContentByName("webServicePort", 0)) + "/equipamentocheck", "POST", s);
+                            json = json.substring(1, json.length() - 1);
+                            if (!json.isEmpty()) {
+                                pc.setMac(sb.toString());
+                                break;
+                            }
+                        }
+                    }
+                }
+                return pc;
+            } catch (NumberFormatException | IOException ex) {
+                return null;
+            }
+        }
     }
 
     public static void saveCurrentUserModel() {
@@ -173,7 +221,6 @@ public class UsefulMethods {
 
                 http.setFixedLengthStreamingMode(length);
                 for (int i = 0; i < requestKeys.length; i++) {
-                    System.out.println("Key: " + requestKeys[i] + " | Value: " + requestValues[i]);
                     http.setRequestProperty(requestKeys[i], requestValues[i]);
                 }
 
@@ -210,7 +257,7 @@ public class UsefulMethods {
             while ((output = br.readLine()) != null) {
                 sb.append(output);
             }
-            
+
             return sb.toString();
         }
     }
@@ -270,7 +317,7 @@ public class UsefulMethods {
         if (bridge != null) {
             return bridge;
         } else {
-            bridge = new ArduinoBridge();
+            bridge = new ArduinoBridge("COM8");
             if (bridge.waitForConnection(5000)) {
                 return bridge;
             } else {
@@ -333,7 +380,7 @@ public class UsefulMethods {
     public static InputStream downloadFile(String source) throws IOException {
         if (ftp == null) {
             ftp = new FTPClient();
-            ftp.connect("10.0.4.70", 21);
+            ftp.connect(getManagerInstance(OPTIONS).getContentByName("webServiceHost", 0), 21);
 
             if (!FTPReply.isPositiveCompletion(ftp.getReplyCode())) {
                 System.err.println("FTP connection failed");
@@ -358,10 +405,6 @@ public class UsefulMethods {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
-    }
-
-    public static long getTimeOfOpening() {
-        return TIME_OF_OPENING;
     }
 
     public static void makeHyperlinkOptionPane(String[] message, String link, int linkIndex, int messageType, String messageTitle) {

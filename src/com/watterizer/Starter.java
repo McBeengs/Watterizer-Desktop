@@ -17,10 +17,8 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,6 +53,9 @@ public class Starter {
             }
         }.start();
 
+//        ZoneInfoProvider provider = new ZoneInfoProvider("org/joda/time/tz/data");
+//        DateTimeZone.setProvider(provider);
+
         UIManager.put("ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI");
         UIManager.put("ProgressBar.cellLength", Integer.MAX_VALUE);
         UIManager.put("ProgressBar.foreground", new Color(51, 153, 255));
@@ -80,11 +81,9 @@ public class Starter {
         UIManager.put("OptionPane.sameSizeButtons", true);
         UIManager.put("Panel.background", Color.black);
 
-        UIManager.put("Panel.background", Color.black);
-        UIManager.put("Panel.background", Color.black);
-        UIManager.put("Panel.background", Color.black);
-        UIManager.put("Panel.background", Color.black);
-        UIManager.put("Panel.background", Color.black);
+        UIManager.put("TabbedPaneUI", "javax.swing.plaf.metal.MetalTabbedPaneUI");
+        UIManager.put("TabbedPane.selected", new Color(234, 213, 25));
+        UIManager.put("TabbedPane.unselectedBackground", new Color(150, 150, 150));
         UIManager.put("TabbedPane.borderHightlightColor", Color.black);
         UIManager.put("TabbedPane.darkShadow", Color.black);
         UIManager.put("TabbedPane.light", Color.black);
@@ -125,7 +124,6 @@ public class Starter {
         try {
             style = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
         } catch (java.lang.NullPointerException ex) {
-            style = null;
             OpaqueScreen screen = new OpaqueScreen();
             GenericErrorJPanel error = new GenericErrorJPanel(screen, "Falha com as configurações", GenericErrorJPanel.ALERT_MESSAGE,
                     "", GenericErrorJPanel.OK);
@@ -147,7 +145,7 @@ public class Starter {
 
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if (set.equals(info.getName())) {
+                if (info.getName().contains("Windows")) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }

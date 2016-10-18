@@ -5,11 +5,16 @@
  */
 package com.watterizer.modals;
 
+import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.models.PCModel;
 import com.watterizer.net.SocketNodeJS;
+import com.watterizer.panels.NewEquipmentJFrame;
+import com.watterizer.panels.SelectConfig;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
+import gnu.io.CommPortIdentifier;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -17,6 +22,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -27,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -38,6 +45,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,6 +62,8 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     private final JButton previous = new JButton();
     private final JButton next = new JButton();
     private int currentPanel = 0;
+    private String wsHostTemp;
+    private String wsPortTemp;
     boolean isMacSelected = false;
     boolean isSetorSelected = false;
     boolean isLastScreen = false;
@@ -73,10 +83,17 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
         next.addActionListener((ActionEvent ae) -> {
             nextPanel();
+            if (currentPanel > 1) {
+                try {
+                    UsefulMethods.getWebServiceResponse("http://" + wsHostTemp + ":" + wsPortTemp + "/test", "GET", null);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "A conexão com o banco de dados caiu inesperadamente. Infelizmente o auxiliar terá que ser encerrado", wsHostTemp, WIDTH);
+                    System.exit(0);
+                }
+            }
+
             if (isLastScreen) {
                 try {
-                    xml.setContentByName("user", 0, "a");
-                    xml.setContentByName("pass", 0, "a");
                     xml.saveXml();
                     System.out.println(xml.toString());
                     System.out.println("salvo xml");
@@ -88,7 +105,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                 + "   \"has_arduino\":\"" + model.getType() + "\", "
                                 + "   \"command\":\"create\""
                                 + "}";
-                        UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/pccheck", "POST", s);
+                        UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/equipamentocheck", "POST", s);
                         System.out.println("salvo no banco");
                     } else {
                         System.err.println("pulado salvar banco");
@@ -186,6 +203,28 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
             previous.setEnabled(false);
         } else if (currentPanel == 2) {
             EventQueue.invokeLater(() -> {
+                JPanel pane = getTerminalPanel();
+                if (pane != null) {
+                    next.setEnabled(false);
+                    contentPane.add(pane, c);
+                    contentPane.revalidate();
+                    contentPane.repaint();
+                } else {
+                    previous.setEnabled(false);
+                    isLastScreen = true;
+                    contentPane.add(getEndPanel(), c);
+                    contentPane.revalidate();
+                    contentPane.repaint();
+                }
+            });
+        } else if (!isLastScreen && currentPanel == 3) {
+            EventQueue.invokeLater(() -> {
+                contentPane.add(getCheckArduinoPane(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
+        } else if (currentPanel == 4) {
+            EventQueue.invokeLater(() -> {
                 contentPane.add(getTerminalPanel(), c);
                 contentPane.revalidate();
                 contentPane.repaint();
@@ -236,7 +275,19 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                 contentPane.repaint();
             });
         } else if (!isLastScreen && currentPanel == 3 && model.getType() == 0) {
-
+            EventQueue.invokeLater(() -> {
+                next.setEnabled(true);
+                contentPane.add(getCheckArduinoPane(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
+        } else if (!isLastScreen && currentPanel == 4 && model.getType() == 0) {
+            EventQueue.invokeLater(() -> {
+                next.setEnabled(true);
+                contentPane.add(getEquipmentsPane(), c);
+                contentPane.revalidate();
+                contentPane.repaint();
+            });
         }
     }
 
@@ -431,8 +482,15 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                     try {
                         SocketNodeJS socket = new SocketNodeJS();
                         socket.socketConnect(jTextField1.getText(), Integer.parseInt(jTextField2.getText()));
+                        String host = jTextField1.getText().trim();
+                        if (host.contains("http://")) {
+                            host = host.substring(7);
+                        }
 
-                        if (!socket.echo("test").isEmpty() && UsefulMethods.getWebServiceResponse("http://" + jTextField1.getText().trim() + ":" + jTextField3.getText()
+                        wsHostTemp = host;
+                        wsPortTemp = jTextField3.getText();
+
+                        if (!socket.echo("test").isEmpty() && UsefulMethods.getWebServiceResponse("http://" + host + ":" + jTextField3.getText()
                                 + "/test", "GET", null).equals("OK")) {
                             display.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/ok.png")));
                             display.setForeground(new java.awt.Color(50, 205, 50));
@@ -442,7 +500,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                             jTextField3.setEnabled(true);
                             jButton1.setEnabled(true);
 
-                            xml.setContentByName("webServiceHost", 0, jTextField1.getText());
+                            xml.setContentByName("webServiceHost", 0, host);
                             xml.setContentByName("socketPort", 0, jTextField2.getText());
                             xml.setContentByName("webServicePort", 0, jTextField3.getText());
 
@@ -584,7 +642,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                     + "\"command\" : \"check\""
                                     + "}";
                             json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
-                                    .parseInt(xml.getContentByName("webServicePort", 0)) + "/pccheck", "POST", s);
+                                    .parseInt(xml.getContentByName("webServicePort", 0)) + "/equipamentocheck", "POST", s);
                             json = json.substring(1, json.length() - 1);
                             if (!json.isEmpty()) {
                                 isSaved = true;
@@ -595,8 +653,10 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
             }
 
             if (isSaved) {
+                System.out.println(json);
                 if (JOptionPane.showConfirmDialog(null, getConfiguredTerminalPane(json), "Aviso",
                         JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                    isLastScreen = true;
                     return null;
                 }
             }
@@ -840,6 +900,224 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         return pane;
     }
 
+    private JPanel getCheckArduinoPane() {
+        JPanel pane = new JPanel();
+        javax.swing.JLabel text = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel top1 = new javax.swing.JLabel();
+        javax.swing.JComboBox jComboBox1 = new javax.swing.JComboBox<>();
+        javax.swing.JLabel updateButton = new javax.swing.JLabel();
+        javax.swing.JButton jButton1 = new javax.swing.JButton();
+        javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
+
+        setBackground(new java.awt.Color(0, 0, 0));
+
+        text.setForeground(new java.awt.Color(255, 255, 255));
+        text.setText("<html><body style=\"text-align: justify;\">    Ao configurar o terminal como Seeder, é necessário que o computador tenha uma unidade Arduino "
+                + "conectada a ele, e este Arduino também precisa de ao menos um medidor para consumir os gastos de uma fonte elétrica. Primeiramente, cheque a "
+                + "comunicação com este terminal para com o Arduino com os controles abaixo:</body></html>");
+        text.setToolTipText("");
+
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("Porta:");
+
+        updateButton.setForeground(new java.awt.Color(255, 255, 255));
+        updateButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/lilCog.png"))); // NOI18N
+        updateButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(updateList()));
+                jComboBox1.revalidate();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent me) {
+                updateButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent me) {
+                updateButton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
+
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.PLAIN, 40);
+        top1.setFont(header);
+        top1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        top1.setText("Testar conexão com Arduino");
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(updateList()));
+
+        jButton1.setText("Testar");
+        jButton1.addActionListener((ActionEvent ae) -> {
+            jLabel3.setVisible(true);
+            new Thread() {
+                @Override
+                public void run() {
+                    ArduinoBridge b = new ArduinoBridge(jComboBox1.getSelectedItem().toString());
+                    if (b.waitForConnection(5000)) {
+                        jLabel3.setText("conectou");
+                        System.out.println(jComboBox1.getSelectedItem().toString());
+                    } else {
+                        jLabel3.setText("ñ");
+                    }
+                }
+            }.start();
+        });
+
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif"))); // NOI18N
+        jLabel3.setText("Checando a conexão...");
+        jLabel3.setVisible(false);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
+        pane.setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                .addComponent(text, javax.swing.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
+                                                .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(previous)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(next))
+                                                .addComponent(top1, javax.swing.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)))
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGap(24, 24, 24)
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(updateButton)
+                                        .addGap(39, 39, 39)
+                                        .addComponent(jButton1)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(top1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(text, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGap(44, 44, 44)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(jButton1)
+                                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addGap(45, 45, 45)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                .addComponent(updateButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(jComboBox1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
+                                                .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(95, 95, 95)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(next)
+                                .addComponent(previous))
+                        .addContainerGap())
+        );
+
+        return pane;
+    }
+
+    private Object[] updateList() {
+        ArrayList<String> ports = new ArrayList<>();
+        Enumeration pList = CommPortIdentifier.getPortIdentifiers();
+
+        while (pList.hasMoreElements()) {
+            CommPortIdentifier cpi = (CommPortIdentifier) pList.nextElement();
+            switch (cpi.getPortType()) {
+                case CommPortIdentifier.PORT_SERIAL:
+                    ports.add(cpi.getName());
+                    break;
+            }
+        }
+
+        return ports.toArray();
+    }
+
+    private JPanel getEquipmentsPane() {
+        JPanel pane = new JPanel();
+
+        javax.swing.JLabel text = new javax.swing.JLabel();
+        javax.swing.JLabel top1 = new javax.swing.JLabel();
+        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+        javax.swing.JTable jTable1 = new javax.swing.JTable();
+        javax.swing.JButton jButton1 = new javax.swing.JButton();
+
+        setBackground(new java.awt.Color(0, 0, 0));
+
+        text.setForeground(new java.awt.Color(255, 255, 255));
+        text.setText("<html><body style=\"text-align: justify;\">    O medidor conectado na porta \"A0\" será automáticamente reservado para a medição do ambiente"
+                + " como um todo. Caso tenha mais de um medidor conectado a outras portas, configure-os abaixo.</html></body>");
+        text.setToolTipText("");
+
+        Font header = UsefulMethods.getHeaderFont();
+        header = header.deriveFont(Font.PLAIN, 40);
+        top1.setFont(header);
+        top1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        top1.setText("Configurar terminais");
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{},
+                new String[]{
+                    "Equipamentos"
+                }
+        ));
+        jScrollPane1.setViewportView(jTable1);
+
+        jButton1.setText("Adicionar Equipamento");
+        jButton1.addActionListener((ActionEvent ae) -> {
+            new NewEquipmentJFrame().setVisible(true);
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
+        pane.setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(text, javax.swing.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(previous)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(next))
+                                        .addComponent(top1, javax.swing.GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
+                                        .addComponent(jScrollPane1))
+                                .addComponent(jButton1))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(top1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(text, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(next)
+                                .addComponent(previous))
+                        .addContainerGap())
+        );
+
+        return pane;
+    }
+
     private JPanel getConfiguredTerminalPane(String json) throws JSONException {
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
@@ -882,7 +1160,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         jLabel8.setText("Arduino:");
 
         arduino.setForeground(new java.awt.Color(255, 255, 255));
-        arduino.setText(obj.getInt("has_arduino") == 0 ? "Possui unidade configurada" : "Não configurado");
+        arduino.setText(obj.getString("mac").contains("-") ? "Possui unidade configurada" : "Não configurado");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
         pane.setLayout(layout);

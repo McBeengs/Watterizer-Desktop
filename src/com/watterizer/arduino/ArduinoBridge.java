@@ -25,30 +25,24 @@ public class ArduinoBridge {
     private ArrayList<DisconnectHandler> disconnectHandlers = new ArrayList<>();
     private boolean isBeingChecked = false;
     private boolean isDisconnected = true;
+    private final String port;
     private CommPortIdentifier portId = null;
     private SerialPort serialPort = null;
     private BufferedReader input;
-    private static final String PORT_NAMES[] = {
-        "/dev/usbdev", // Linux
-        "/dev/tty", // Linux
-        "/dev/serial", // Linux
-        "COM3", "COM8" // Windows
-    };
 
-    public ArduinoBridge() {
+    public ArduinoBridge(String port) {
         consoleHandlers = new ArrayList<>();
         disconnectHandlers = new ArrayList<>();
+        this.port = port;
     }
 
     public boolean checkConnection() {
         Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
         while (portEnum.hasMoreElements()) {
             CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
-            for (String portName : PORT_NAMES) {
-                if (currPortId.getName().equals(portName)) {
-                    portId = currPortId;
-                    break;
-                }
+            if (currPortId.getName().equals(port)) {
+                portId = currPortId;
+                break;
             }
         }
 
@@ -74,7 +68,7 @@ public class ArduinoBridge {
         } else {
             serialPort = (SerialPort) portId.open(this.getClass().getName(),
                     2000);
-
+            
             serialPort.setSerialPortParams(9600,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
@@ -103,6 +97,8 @@ public class ArduinoBridge {
                     //do something
                 }
             });
+            
+            System.err.println("yes");
         }
 
         return true;
@@ -139,6 +135,7 @@ public class ArduinoBridge {
                     openConnection();
                 } catch (PortInUseException | UnsupportedCommOperationException | IOException | TooManyListenersException ex) {
                     Logger.getLogger(ArduinoBridge.class.getName()).log(Level.SEVERE, null, ex);
+                    return false;
                 }
                 return true;
             }

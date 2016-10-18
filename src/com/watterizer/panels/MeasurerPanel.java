@@ -26,7 +26,6 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.text.ParseException;
@@ -36,6 +35,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -65,7 +65,7 @@ public class MeasurerPanel extends SLPanel {
     private double totalSpent;
 
     @SuppressWarnings({"OverridableMethodCallInConstructor", "CallToThreadStartDuringObjectConstruction"})
-    public MeasurerPanel() throws IOException {
+    public MeasurerPanel(JSONObject machine) throws IOException {
         initComponents();
         //arduinoBridge = UsefulMethods.getArduinoInstance();
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
@@ -73,6 +73,13 @@ public class MeasurerPanel extends SLPanel {
         try {
             socket.socketConnect(xml.getContentByName("webServiceHost", 0), Integer.parseInt(xml.getContentByName("socketPort", 0)));
         } catch (IOException ex) {
+            Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        try {
+            jLabel1.setText(machine.getString("nome"));
+            jLabel2.setText(" - " + machine.getString("setor"));
+        } catch (JSONException ex) {
             Logger.getLogger(MeasurerPanel.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -98,10 +105,15 @@ public class MeasurerPanel extends SLPanel {
                     updateChart(r);
 
                     if (isDBConnectionOk) {
-                        socket.echo("{"
-                                + "\"arduino\" : \"2\","
+                        try {
+                            socket.echo("{"
+                                + "\"arduino\" : \"" + "2" + "\","
                                 + "\"gasto\" : \"" + r + "\""
                                 + "}");
+                        } catch (Exception ex) {
+                            isDBConnectionOk = false;
+                            JOptionPane.showMessageDialog(null, "deu ruim no webservice");
+                        }
                     }
                     try {
                         sleep(1000);
@@ -217,7 +229,7 @@ public class MeasurerPanel extends SLPanel {
     private void createChart() {
         try {
             String[] keys = new String[] {"Content-Type", "token"};
-            String[] values = new String[] {"application/json; charset=UTF-8", UsefulMethods.getCurrentUserModel().getTokenDesktop()};
+            String[] values = new String[] {"application/json; charset=UTF-8", UsefulMethods.getUserModel().getTokenDesktop()};
             
             String json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
                             + xml.getContentByName("webServicePort", 0) +"/dados/gasto/hoje/1", "GET", keys, values, null);
@@ -270,6 +282,7 @@ public class MeasurerPanel extends SLPanel {
         jPanel1.revalidate();
     }
 
+    private int test = 0;
     private void updateChart(double spent) {
         if (isDBConnectionOk) {
             TimeSeriesCollection dataset = (TimeSeriesCollection) chart.getXYPlot().getDataset();
@@ -279,7 +292,7 @@ public class MeasurerPanel extends SLPanel {
             long top = cal.getTimeInMillis();
             cal.add(Calendar.SECOND, -15);
             long bottom = cal.getTimeInMillis();
-            dataset.getSeries("Consumo atual").removeAgedItems(bottom, true);
+            
             range.setRange(new Range(bottom, top));
         }
     }

@@ -1,7 +1,6 @@
 package com.watterizer.runtime;
 
 import com.watterizer.crypto.Encrypter;
-import com.watterizer.json.JSONObject;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.BorderLayout;
@@ -37,6 +36,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /* **********   runtime.java   **********
  *
@@ -238,6 +239,8 @@ public class Runner {
                                     }
                                 } catch (IOException | HeadlessException ex) {
 
+                                } catch (JSONException ex) {
+                                    Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
                         });

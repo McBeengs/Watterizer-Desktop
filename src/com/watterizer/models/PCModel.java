@@ -14,6 +14,8 @@ public class PCModel {
     private String nome = "";
     private String mac = "";
     private String setor = "";
+    private String descricao;
+    private int arduinoId;
     private int setorId = 0;
     private int type = 0;
 

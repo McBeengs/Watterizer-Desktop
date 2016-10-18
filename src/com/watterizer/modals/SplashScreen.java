@@ -272,13 +272,13 @@ public class SplashScreen extends javax.swing.JFrame {
             }
 
             infoDisplayer.setText(language.getContentById("testInternet"));
-            try {
-                URL url = new URL("https://www.google.com");
-                url.openStream();
-            } catch (Exception ex) {
-                errorDetail = language.getContentById("internetFailure");
-                throw new Exception("Internet");
-            }
+//            try {
+//                URL url = new URL("https://www.google.com");
+//                url.openStream();
+//            } catch (Exception ex) {
+//                errorDetail = language.getContentById("internetFailure");
+//                throw new Exception("Internet");
+//            }
 
             for (int i = 30; i < 60; i++) {
                 jProgressBar1.setValue(i);

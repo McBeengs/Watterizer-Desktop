@@ -23,6 +23,7 @@ import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.MenuItem;
@@ -34,24 +35,22 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import org.joda.time.LocalTime;
 import org.joda.time.Period;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 public class MainJFrame extends javax.swing.JFrame {
 
     //private boolean isIconfied = false;
-    private final MeasurerPanel measurerPanel;
     private XmlManager xml;
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
@@ -63,17 +62,41 @@ public class MainJFrame extends javax.swing.JFrame {
             @Override
             public void windowClosing(WindowEvent we) {
                 try {
-                    Period period = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getCurrentUserModel().getHoraIntervalo().getTime());
+                    final Period period = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getUserModel().getHoraIntervalo().getTime() - 710000);
                     if (period.getSeconds() < 0) {
-                        period = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getCurrentUserModel().getHoraSaida().getTime());
-                        if (period.getSeconds() < 0) {
-                            
+                        //make condition of letting the program to be closed within 10 min
+                        Period getMinWindow = new Period(UsefulMethods.getUserModel().getHoraIntervalo().getTime(), UsefulMethods.getUserModel().getHoraIntervalo().getTime() + 600000);
+                        if (getMinWindow.getMinutes() > 0) {
+                            System.out.println(getMinWindow.getMinutes());
                         } else {
-                            System.out.println("faltam " + period.getHours() + " horas, " + period.getMinutes() + " minutos e " + period.getSeconds()+ " segundos");
+                            final Period period2 = new Period(new LocalTime().getMillisOfDay(), UsefulMethods.getUserModel().getHoraSaida().getTime());
+                            if (period2.getSeconds() < 0) {
+
+                            } else {
+                                System.out.println("faltam " + period2.getHours() + " horas, " + period2.getMinutes() + " minutos e " + period2.getSeconds() + " segundos para a saida");
+                            }
+                        }
+                    } else {
+                        String text = "<html><body>Ainda faltam &time para o fim do expediente. Tem certeza que"
+                                + " deseja sair?</html></body>";
+                        String time = "";
+                        if (period.getHours() > 0) {
+                            time += period.getHours() + " horas";
+                        } else if (period.getMinutes() > 0) {
+                            time += period.getMinutes() + " minutos";
+                        } else if (period.getSeconds() > 0) {
+                            time += period.getSeconds() + " segundos";
+                        }
+
+                        JLabel label = new JLabel(text.replace("&time", time), JLabel.CENTER);
+                        label.setForeground(Color.white);
+
+                        if (JOptionPane.showConfirmDialog(null, label, "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                            System.exit(0);
                         }
                     }
                 } catch (Exception ex) {
-                    Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    //Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         });
@@ -118,9 +141,26 @@ public class MainJFrame extends javax.swing.JFrame {
             });
         }
 
-        measurerPanel = new MeasurerPanel();
-        measurerPanel.setVisible(true);
-        mainTabbedPane.addTab("Medidor 1", measurerPanel);
+        String[] keys = new String[]{"Content-Type", "token"};
+        String[] values = new String[]{"application/json; charset=UTF-8", UsefulMethods.getUserModel().getTokenDesktop()};
+        String json = "{"
+                + "   \"mac\":\"" + /*UsefulMethods.getPcModel().getMac()*/ "70-54-D2-C6-A7-7E" + "\""
+                + "}";
+        json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
+                + xml.getContentByName("webServicePort", 0) + "/dados/equipamentocheckarduino", "POST", keys, values, json);
+
+        System.out.println(json);
+        try {
+            JSONArray array = new JSONArray(json);
+            for (int i = 0; i < array.length(); i++) {
+                MeasurerPanel measurerPanel = new MeasurerPanel(array.getJSONObject(i));
+                measurerPanel.setVisible(true);
+                mainTabbedPane.addTab(array.getJSONObject(i).getString("nome"), measurerPanel);
+            }
+
+        } catch (JSONException ex) {
+            Logger.getLogger(MainJFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         try {
             iconDisplayer.setIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid1.png"))));
@@ -173,7 +213,7 @@ public class MainJFrame extends javax.swing.JFrame {
         header = header.deriveFont(Font.BOLD, 22);
         jLabel1.setFont(header);
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel1.setText(UsefulMethods.getCurrentUserModel().getUsername());
+        jLabel1.setText(UsefulMethods.getUserModel().getUsername());
 
         jLabel3.setFont(new java.awt.Font("Microsoft YaHei", 0, 12)); // NOI18N
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -273,7 +313,7 @@ public class MainJFrame extends javax.swing.JFrame {
                     if (JOptionPane.showConfirmDialog(null, "Deseja fazer o logout?", "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         try {
                             String s = "{\n"
-                                    + "\"token\":\"" + UsefulMethods.getCurrentUserModel().getTokenDesktop() + "\"\n"
+                                    + "\"token\":\"" + UsefulMethods.getUserModel().getTokenDesktop() + "\"\n"
                                     + "}";
 
                             UsefulMethods.getWebServiceResponse(xml.getContentByName("webServiceHost", 0) + "/logout", "GET", s);
