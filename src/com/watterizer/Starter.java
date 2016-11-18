@@ -15,19 +15,30 @@ import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.HeadlessException;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.net.ProtocolException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.Painter;
+import javax.swing.Timer;
 import javax.swing.UIManager;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import sun.tools.jconsole.LocalVirtualMachine;
 
 /**
@@ -36,26 +47,24 @@ import sun.tools.jconsole.LocalVirtualMachine;
  */
 public class Starter {
 
+    private static int min = 10;
+    private static JDialog dialog;
+    private static JOptionPane pane;
+
     public static void main(String[] args) throws IOException, InterruptedException {
         Locale.setDefault(new Locale("pt", "BR"));
         String separator = File.separator;
 
-        new Thread() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
-                    } catch (IOException | InterruptedException ex) {
-                        Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        }.start();
+        String path = Starter.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
+        decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+        if (decodedPath.contains("watt_exec.jar")) {
+            FileOutputStream stream = new FileOutputStream(new File(UsefulMethods.getClassPath(Starter.class) + "log.txt"));
+            System.setErr(new PrintStream(stream));
+        }
 
 //        ZoneInfoProvider provider = new ZoneInfoProvider("org/joda/time/tz/data");
 //        DateTimeZone.setProvider(provider);
-
         UIManager.put("ProgressBarUI", "javax.swing.plaf.metal.MetalProgressBarUI");
         UIManager.put("ProgressBar.cellLength", Integer.MAX_VALUE);
         UIManager.put("ProgressBar.foreground", new Color(51, 153, 255));
@@ -94,18 +103,21 @@ public class Starter {
         UIManager.put("TabbedPane.font", UsefulMethods.getHeaderFont());
         UIManager.put("TabbedPane.tabsOpaque", true);
 
-        final Map<Integer, LocalVirtualMachine> virtualMachines = LocalVirtualMachine.getAllVirtualMachines();
-        int isRunning = 0;
-        for (final Entry<Integer, LocalVirtualMachine> entry : virtualMachines.entrySet()) {
-            if (!entry.getValue().displayName().isEmpty()) {
-                if (entry.getValue().displayName().equals("com.watterizer.Starter") && isRunning < 1) {
-                    isRunning++;
-                } else {
-                    JOptionPane.showMessageDialog(null, "O aplicativo \"Watterizer\" já está em execução.", "Erro", JOptionPane.ERROR_MESSAGE);
-                    System.exit(0);
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    if (UsefulMethods.isShutdownTrue()) {
+                        UsefulMethods.getArduinoInstance().close();
+                        System.err.println("exited");
+                    } else {
+
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-        }
+        });
 
         File getConfig = new File(UsefulMethods.getClassPath(SplashScreen.class) + separator + "config");
         if (!getConfig.exists()) {
@@ -141,11 +153,12 @@ public class Starter {
             screen.setVisible(true);
             return;
         }
+
         String set = style.getContentByName("style", 0);
 
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if (info.getName().contains("Windows")) {
+                if (info.getName().contains(set)) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
@@ -164,6 +177,103 @@ public class Starter {
             UIManager.put("ButtonUI", "javax.swing.plaf.metal.MetalButtonUI");
             UIManager.put("Button.font", new Font("Tahoma", Font.PLAIN, 11));
         }
+
+        String s = "{"
+                + "\"valor\":" + style.getContentByName("kwh", 0)
+                + "}";
+        UsefulMethods.getWebServiceResponse("http://" + style.getContentByName("webServiceHost", 0) + ":" + style.getContentByName("webServicePort", 0)
+                + "/kilowatt", "POST", s);
+
+        new Thread("Shutdown Hook") {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        XmlManager xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
+                        String json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0)
+                                + "/desligapc", "GET", null);
+                        JSONArray macs = new JSONArray(json);
+                        for (int i = 0; i < macs.length(); i++) {
+                            JSONObject obj = macs.getJSONObject(i);
+                            if (obj.getString("mac").equals(UsefulMethods.getPcModel().getMac())) {
+                                String message = "O computador será desligado automaticamente em &num minutos. Gostaria de permanecer utilizando-o?";
+
+                                Timer t = new Timer(60000, (ActionEvent ae) -> {
+                                    min--;
+                                    if (min <= 0) {
+                                        try {
+                                            Runtime.getRuntime().exec("shutdown -s -t 0");
+                                        } catch (Exception ex) {
+                                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                    }
+                                    pane.setMessage(message.replace("&num", "" + min));
+                                    pane.repaint();
+                                    pane.revalidate();
+                                    dialog.repaint();
+                                    dialog.revalidate();
+                                });
+                                t.setRepeats(true);
+                                t.start();
+
+                                JButton[] buttons = new JButton[2];
+                                JButton yes = new JButton(new AbstractAction() {
+                                    @Override
+                                    public void actionPerformed(ActionEvent ae) {
+                                        try {
+                                            t.stop();
+                                            String s = "{"
+                                                    + "\"mac\":\"" + UsefulMethods.getPcModel().getMac() + " \","
+                                                    + "\"option\":\"sim\""
+                                                    + "}";
+                                            UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0)
+                                                    + "/desligaconf", "POST", s);
+                                            dialog.dispose();
+                                        } catch (ProtocolException ex) {
+                                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                                        } catch (IOException ex) {
+                                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                    }
+                                });
+                                yes.setText("Sim");
+
+                                JButton no = new JButton(new AbstractAction() {
+                                    @Override
+                                    public void actionPerformed(ActionEvent ae) {
+                                        try {
+                                            String s = "{"
+                                                    + "\"mac\":\"" + UsefulMethods.getPcModel().getMac() + " \","
+                                                    + "\"option\":\"nao\""
+                                                    + "}";
+                                            UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0)
+                                                    + "/desligaconf", "POST", s);
+
+                                            Runtime.getRuntime().exec("shutdown -s -t 0");
+                                        } catch (Exception ex) {
+                                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                    }
+                                });
+                                no.setText("Não");
+
+                                buttons[0] = yes;
+                                buttons[1] = no;
+
+                                pane = new JOptionPane(message.replace("&num", "" + min), JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION, null, buttons);
+                                dialog = pane.createDialog("Alerta");
+                                dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
+                                dialog.setVisible(true);
+                            }
+                        }
+                        sleep(1000);
+                    } catch (IOException | JSONException | HeadlessException | InterruptedException ex) {
+                        Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        }.start();
 
         java.awt.EventQueue.invokeLater(() -> {
             new SplashScreen().setVisible(true);

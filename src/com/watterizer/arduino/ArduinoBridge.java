@@ -21,8 +21,8 @@ import java.util.logging.Logger;
 
 public class ArduinoBridge {
 
-    private ArrayList<ConsoleHandler> consoleHandlers = new ArrayList<>();
-    private ArrayList<DisconnectHandler> disconnectHandlers = new ArrayList<>();
+    private final ArrayList<ConsoleHandler> consoleHandlers = new ArrayList<>();
+    private final ArrayList<DisconnectHandler> disconnectHandlers = new ArrayList<>();
     private boolean isBeingChecked = false;
     private boolean isDisconnected = true;
     private final String port;
@@ -31,8 +31,6 @@ public class ArduinoBridge {
     private BufferedReader input;
 
     public ArduinoBridge(String port) {
-        consoleHandlers = new ArrayList<>();
-        disconnectHandlers = new ArrayList<>();
         this.port = port;
     }
 
@@ -60,6 +58,7 @@ public class ArduinoBridge {
         }
     }
 
+    private boolean isStreamInvalid = false;
     public boolean openConnection() throws PortInUseException, UnsupportedCommOperationException, IOException, TooManyListenersException {
         if (isDisconnected) {
             if (!checkConnection()) {
@@ -91,17 +90,16 @@ public class ArduinoBridge {
                             });
                         }
                     } catch (IOException ex) {
-                        Logger.getLogger(ArduinoBridge.class.getName()).log(Level.SEVERE, null, ex);
+                        //Logger.getLogger(ArduinoBridge.class.getName()).log(Level.SEVERE, null, ex);
+                        //isStreamInvalid = true;
                     }
                 } else {
                     //do something
                 }
             });
-            
-            System.err.println("yes");
         }
 
-        return true;
+        return !isStreamInvalid;
     }
 
     public void startCheckIn() {
@@ -142,6 +140,10 @@ public class ArduinoBridge {
         }
 
         return false;
+    }
+    
+    public void close() {
+        serialPort.close();
     }
 
     public void addDisconnectHandler(DisconnectHandler handler) {

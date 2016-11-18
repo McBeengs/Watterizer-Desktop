@@ -75,4 +75,19 @@
         <string id="keepLogin">Salvar login</string>
         <string id="adminConfig">Configurações Administrativas</string>
     </loginJFrame>
+    
+    <!--
+    Strings que serão usadas na tela de configurações
+    -->
+    <optionsPane>
+        <gui>
+            <node id="first">GUI Settings</node>
+            <mainLabel>GUI</mainLabel>
+            <string id="language">Language</string>
+            <string id="style">Set style</string>
+            <alert>Alert: The program must be restarted</alert>
+            <checkbox id="updates1">Check updates on the start</checkbox>
+            <checkbox id="updates2">Notify me before installing new ones</checkbox>
+        </gui>
+    </optionsPane>
 </root>

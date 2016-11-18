@@ -24,8 +24,17 @@ import javax.swing.JPanel;
  */
 public class OpaqueScreen {
 
-    private final JFrame frame = new JFrame();
+    private JFrame frame = new JFrame();
     private static int INSTANCES = 0;
+    private Thread thread = new Thread(() -> {
+        while (frame != null) {
+            try {
+                Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();
+            } catch (IOException | InterruptedException ex) {
+                Logger.getLogger(OpaqueScreen.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    });
 
     public OpaqueScreen() throws IOException, InterruptedException {
         this(null);
@@ -71,6 +80,12 @@ public class OpaqueScreen {
 
     public void setVisible(boolean bln) {
         frame.setVisible(bln);
+        try {
+            Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
+            thread.start();
+        } catch (IOException | InterruptedException ex) {
+            Logger.getLogger(OpaqueScreen.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public void close() {
@@ -80,6 +95,7 @@ public class OpaqueScreen {
             }
             INSTANCES--;
             frame.dispose();
+            frame = null;
         } catch (IOException ex) {
             Logger.getLogger(OpaqueScreen.class.getName()).log(Level.SEVERE, null, ex);
         }

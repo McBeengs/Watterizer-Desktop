@@ -37,18 +37,32 @@ public class SplashScreen extends javax.swing.JFrame {
         }
 
         fadeInSplash(2000, (ActionEvent e) -> {
-            // Checar arquivo de configurações para identificar servidor local ou remoto.
-            // Caso seja remoto:
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        executeTests();
-                    } catch (IOException | InterruptedException ex) {
-                        Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+            // Checar arquivo de configurações para identificar terminal "Seeder" ou "Leecher"
+            // Caso seja Seeder:
+            if (xml.getContentByName("terminalType", 0).equals("0")) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            executeTests(true);
+                        } catch (IOException | InterruptedException ex) {
+                            Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
-                }
-            }.start();
+                }.start();
+            } else {
+                //caso seja leecher
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            executeTests(false);
+                        } catch (IOException | InterruptedException ex) {
+                            Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }.start();
+            }
         });
         repaint();
     }
@@ -128,13 +142,13 @@ public class SplashScreen extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("ResultOfObjectAllocationIgnored")
-    private void executeTests() throws IOException, InterruptedException {
+    private void executeTests(boolean bol) throws IOException, InterruptedException {
         jProgressBar1.setMinimum(0);
         jProgressBar1.setMaximum(60);
         jProgressBar1.setValue(0);
 
         try {
-            checkInternetConn();
+            checkInternetConn(bol);
 
             fadeOutSplash(1000, (ActionEvent e) -> {
                 try {
@@ -166,7 +180,7 @@ public class SplashScreen extends javax.swing.JFrame {
                             @Override
                             public void run() {
                                 try {
-                                    executeTests();
+                                    executeTests(bol);
                                 } catch (IOException | InterruptedException ex1) {
                                     Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex1);
                                 }
@@ -184,7 +198,6 @@ public class SplashScreen extends javax.swing.JFrame {
 
                     internet.setRightButtonAction((ActionEvent e) -> {
                         internet.disposeWindow();
-                        screen.close();
                         dispose();
                     });
 
@@ -193,7 +206,7 @@ public class SplashScreen extends javax.swing.JFrame {
                             @Override
                             public void run() {
                                 try {
-                                    executeTests();
+                                    executeTests(bol);
                                 } catch (IOException | InterruptedException ex1) {
                                     Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex1);
                                 }
@@ -211,7 +224,6 @@ public class SplashScreen extends javax.swing.JFrame {
 
                     db.setRightButtonAction((ActionEvent e) -> {
                         db.disposeWindow();
-                        screen.close();
                         dispose();
                     });
 
@@ -220,7 +232,7 @@ public class SplashScreen extends javax.swing.JFrame {
                             @Override
                             public void run() {
                                 try {
-                                    executeTests();
+                                    executeTests(bol);
                                 } catch (IOException | InterruptedException ex1) {
                                     Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex1);
                                 }
@@ -254,18 +266,20 @@ public class SplashScreen extends javax.swing.JFrame {
         return true;
     }
 
-    private boolean checkInternetConn() throws Exception {
+    private boolean checkInternetConn(boolean bol) throws Exception {
         if (Boolean.parseBoolean(xml.getContentById("isDebugActive")) && Boolean.parseBoolean(xml.getContentById("offlineMode"))) {
             return true;
         } else {
-            infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
-            infoDisplayer.setText(language.getContentById("testArduino"));
-//            try {
-//                UsefulMethods.getArduinoInstance();
-//            } catch (IOException ex) {
-//                errorDetail = language.getContentById("arduinoFailure");
-//                throw new Exception("Arduino");
-//            }
+            if (bol) {
+                infoDisplayer.setIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
+                infoDisplayer.setText(language.getContentById("testArduino"));
+                try {
+                    UsefulMethods.getArduinoInstance();
+                } catch (IOException ex) {
+                    errorDetail = language.getContentById("arduinoFailure");
+                    throw new Exception("Arduino");
+                }
+            }
             for (int i = 0; i < 30; i++) {
                 jProgressBar1.setValue(i);
                 Thread.sleep(10);
@@ -288,6 +302,13 @@ public class SplashScreen extends javax.swing.JFrame {
             try {
                 System.out.println(UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
                         + xml.getContentByName("webServicePort", 0) + "/test", "GET", null));
+
+                String s = "{"
+                        + "\"mac\":\"" + UsefulMethods.getPcModel().getMac() + "\""
+                        + "}";
+
+                UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
+                        + xml.getContentByName("webServicePort", 0) + "/pcligado", "POST", s);
             } catch (Exception ex) {
                 errorDetail = language.getContentById("dbFailure");
                 throw new Exception("DB");

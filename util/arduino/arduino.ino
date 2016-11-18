@@ -15,14 +15,13 @@ void setup() {
 }
 
 void loop() {
-  double wattPin0 = pin0.calcIrms(1480) * volt;
-  double wattPin1 = pin1.calcIrms(1480) * volt;
-  double wattPin2 = pin2.calcIrms(1480) * volt;
-  //double wattPin3 = pin3.calcIrms(1480) * volt;
-  //double wattPin4 = pin4.calcIrms(1480) * volt;
-  //double wattPin5 = pin5.calcIrms(1480) * volt;
-  //Serial.println("a0(" + doubleToString(wattPin0, 2) + ") | a1(" + doubleToString(wattPin1, 2) + ") | a2(" + doubleToString(wattPin2, 2) +") | a3(" + doubleToString(wattPin3, 2) +") | a4(" + doubleToString(wattPin4, 2) +") | a5(" + doubleToString(wattPin5, 2) + ")");
-  Serial.println("a0(" + doubleToString(wattPin0, 2) + ") | a1(" + doubleToString(wattPin1, 2) + ") | a2(" + doubleToString(wattPin2, 2) +")");
+  double ampPin0 = pin0.calcIrms(1480);
+  double ampPin1 = pin1.calcIrms(1480);
+  double ampPin2 = pin2.calcIrms(1480);
+  //double ampPin3 = pin3.calcIrms(1480);
+  //double ampPin4 = pin4.calcIrms(1480);
+  //double ampPin5 = pin5.calcIrms(1480);
+  Serial.println("a0(" + doubleToString(ampPin0, 2) + ") | a1(" + doubleToString(ampPin1, 2) + ") | a2(" + doubleToString(ampPin2, 2) +")");
   delay(250);
 }
 

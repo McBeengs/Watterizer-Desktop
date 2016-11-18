@@ -62,12 +62,15 @@ import net.java.balloontip.utils.FadingUtils;
 import net.java.balloontip.utils.TimingUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class UsefulMethods {
 
     public static final int OPTIONS = 0;
     public static final int LANGUAGE = 1;
     public static double CURRENT_KWH_CHARGE;
+    private static boolean isShutdownTrue = false;
     private static XmlManager options;
     private static XmlManager language;
     private static ArduinoBridge bridge;
@@ -105,6 +108,7 @@ public class UsefulMethods {
                 + "        <socketPort>12345</socketPort>\n"
                 + "        <terminalType>0</terminalType>\n"
                 + "        <autoLogin>false</autoLogin>\n"
+                + "        <kwh>0.0</kwh>\n"
                 + "        <user>null</user>\n"
                 + "        <pass>null</pass>\n"
                 + "    </gui>\n"
@@ -121,7 +125,11 @@ public class UsefulMethods {
         try {
             String path = cls.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
-            return decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+            decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+            if (decodedPath.contains("watt_exec.jar")) {
+                decodedPath = decodedPath.substring(0, decodedPath.indexOf("watt_exec.jar"));
+            }
+            return decodedPath;
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -164,6 +172,8 @@ public class UsefulMethods {
                             json = getWebServiceResponse("http://" + getManagerInstance(OPTIONS).getContentByName("webServiceHost", 0) + ":" + Integer
                                     .parseInt(getManagerInstance(OPTIONS).getContentByName("webServicePort", 0)) + "/equipamentocheck", "POST", s);
                             json = json.substring(1, json.length() - 1);
+                            JSONObject obj = new JSONObject(json);
+                            pc.setArduinoId(obj.getInt("id_arduino"));
                             if (!json.isEmpty()) {
                                 pc.setMac(sb.toString());
                                 break;
@@ -172,7 +182,7 @@ public class UsefulMethods {
                     }
                 }
                 return pc;
-            } catch (NumberFormatException | IOException ex) {
+            } catch (NumberFormatException | IOException | JSONException ex) {
                 return null;
             }
         }
@@ -358,6 +368,14 @@ public class UsefulMethods {
         temp = temp.substring(0, temp.indexOf(","));
         language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
     }
+    
+    public static boolean isShutdownTrue() {
+        return isShutdownTrue;
+    }
+    
+    public static void setIsShutdownTrue(boolean bl) {
+        isShutdownTrue = bl;
+    }
 
     public static Font getHeaderFont() {
         if (headerFont != null) {
@@ -365,7 +383,8 @@ public class UsefulMethods {
         } else {
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             try {
-                InputStream stream = UsefulMethods.class.getResourceAsStream("../style/featuredItem.ttf");
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                InputStream stream = classLoader.getResourceAsStream("com/watterizer/style/featuredItem.ttf");
                 headerFont = Font.createFont(Font.TRUETYPE_FONT, stream);
                 ge.registerFont(headerFont);
                 headerFont = headerFont.deriveFont(Font.PLAIN, 30);
@@ -450,22 +469,29 @@ public class UsefulMethods {
 
         return date.getDisplayName(2, 2, Locale.US) + " " + date.get(Calendar.DATE) + ", " + date.get(Calendar.YEAR);
     }
-
+    
     public static void makeBalloon(final JComponent component, final String text, final long time, final Color color) {
+        makeBalloon(component, text, time, 0, color);
+    }
+
+    public static void makeBalloon(final JComponent component, final String text, final long time, final long delay, final Color color) {
         new Thread("Showing ballon \"" + text + "\"") {
             @Override
             public void run() {
-                BalloonTip balloonTip = new BalloonTip(component, new JLabel(text), new MinimalBalloonStyle(color, 10),
-                        BalloonTip.Orientation.LEFT_BELOW, BalloonTip.AttachLocation.SOUTH, 25, 10, false);
-
-                FadingUtils.fadeInBalloon(balloonTip, null, 200, 24);
                 try {
+                    java.lang.Thread.sleep(delay);
+                    BalloonTip balloonTip = new BalloonTip(component, new JLabel(text), new MinimalBalloonStyle(color, 10),
+                            BalloonTip.Orientation.LEFT_BELOW, BalloonTip.AttachLocation.SOUTH, 25, 10, false);
+                    
+                    FadingUtils.fadeInBalloon(balloonTip, null, 200, 24);
+                    
                     java.lang.Thread.sleep(time);
+                    
+                    FadingUtils.fadeOutBalloon(balloonTip, null, 200, 24);
+                    TimingUtils.showTimedBalloon(balloonTip, 200);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                FadingUtils.fadeOutBalloon(balloonTip, null, 200, 24);
-                TimingUtils.showTimedBalloon(balloonTip, 200);
             }
         }.start();
     }

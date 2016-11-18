@@ -5,8 +5,9 @@
  */
 package com.watterizer.panels;
 
-import com.watterizer.modals.MainJFrame;
+import com.watterizer.modals.MainSeederJFrame;
 import com.watterizer.crypto.Encrypter;
+import com.watterizer.modals.MainLeecherJFrame;
 import com.watterizer.util.OpaqueScreen;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.models.UserModel;
@@ -46,8 +47,6 @@ public class LoginJPanel extends javax.swing.JPanel {
         if (Boolean.parseBoolean(xml.getContentByName("autoLogin", 0))) {
             userInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("user", 0)));
             passInput.setText(Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, xml.getContentByName("pass", 0)));
-
-            Runtime.getRuntime().exec("taskkill /F /IM " + "explorer.exe").waitFor();
 
             OpaqueScreen screen = new OpaqueScreen();
             screen.setVisible(true);
@@ -265,8 +264,8 @@ public class LoginJPanel extends javax.swing.JPanel {
                         xml.setContentByName("user", 0, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, userInput.getText()));
                         xml.setContentByName("pass", 0, Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, new String(passInput.getPassword())));
                     } else {
-                        xml.setContentByName("user", 0, "");
-                        xml.setContentByName("pass", 0, "");
+                        xml.setContentByName("user", 0, "null");
+                        xml.setContentByName("pass", 0, "null");
                     }
                     checkDB();
                 }
@@ -364,7 +363,11 @@ public class LoginJPanel extends javax.swing.JPanel {
                         model.setTokenDesktop(obj.getString("token_desktop"));
                         UsefulMethods.setCurrentUserModel(model);
 
-                        new MainJFrame().setVisible(true);
+                        if (xml.getContentByName("terminalType", 0).equals("0") && model.getPerfil().equals("administrador")) {
+                            new MainSeederJFrame().setVisible(true);
+                        } else {
+                            new MainLeecherJFrame().setVisible(true);
+                        }
                         rootScreen.close();
 
                     } catch (JSONException | ParseException ex) {

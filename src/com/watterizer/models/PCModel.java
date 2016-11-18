@@ -14,7 +14,6 @@ public class PCModel {
     private String nome = "";
     private String mac = "";
     private String setor = "";
-    private String descricao;
     private int arduinoId;
     private int setorId = 0;
     private int type = 0;
@@ -49,6 +48,14 @@ public class PCModel {
 
     public void setSetorId(int setorId) {
         this.setorId = setorId;
+    }
+    
+    public int getArduinoId() {
+        return arduinoId;
+    }
+    
+    public void setArduinoId(int arduinoId) {
+        this.arduinoId = arduinoId;
     }
     
     public int getType() {

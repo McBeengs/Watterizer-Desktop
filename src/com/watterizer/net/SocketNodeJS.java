@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public class SocketNodeJS {
 
     private Socket socket = null;
+    private boolean isSocketConnected = false;
 
     /**
      * Realiza a conexão com o socket
@@ -32,6 +33,7 @@ public class SocketNodeJS {
      */
     public void socketConnect(String ip, int port) throws UnknownHostException, IOException {
         this.socket = new Socket(ip, port);
+        isSocketConnected = true;
     }
 
     /**
@@ -40,24 +42,17 @@ public class SocketNodeJS {
      * @param message
      * @return
      */
-    public String echo(String message) {
-        try {
-            // out & in 
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    public String echo(String message) throws IOException {
+        // out & in 
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // escreve str no socket e lêr
-            out.println(message);
-            String retorno = in.readLine();
-            return retorno;
-
-        } catch (IOException ex) {
-            Logger.getLogger(SocketNodeJS.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return null;
+        // escreve str no socket e lêr
+        out.println(message);
+        String retorno = in.readLine();
+        return retorno;
     }
-    
+
     public String readLine() {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -66,5 +61,18 @@ public class SocketNodeJS {
             Logger.getLogger(SocketNodeJS.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+    
+    public void close() {
+        try {
+            socket.close();
+            isSocketConnected = false;
+        } catch (IOException ex) {
+            Logger.getLogger(SocketNodeJS.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public boolean isSocketConnected() {
+        return isSocketConnected;
     }
 }
