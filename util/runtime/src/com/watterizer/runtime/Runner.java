@@ -20,7 +20,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,26 +70,22 @@ public class Runner {
     public static void main(String[] args) throws IOException {
         EventQueue.invokeLater(() -> {
             try {
-                PrintStream out = new PrintStream(new FileOutputStream(UsefulMethods.getClassPath(Runner.class) + File.separator + "log.txt"));
-                System.setErr(out);
+                String path = Runner.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
+                decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+                if (decodedPath.contains("watt_exec.jar")) {
+                    FileOutputStream stream = new FileOutputStream(new File(UsefulMethods.getClassPath(Runner.class) + "runn_log.txt"));
+                    System.setErr(new PrintStream(stream));
+                }
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 String openUser;
                 String openId;
-                String openIdSetor;
-                String openTimeOfOpening;
-                String openTimeOfClose = Long.toString(System.currentTimeMillis());
-                openUser = "Dona Marocas";
-                openId = "1";
-                openIdSetor = "2";
-                openTimeOfOpening = "hoje";
 
                 try {
-//                    openUser = args[0];
-//                    openId = args[1];
-//                    openIdSetor = args[2];
-//                    openTimeOfOpening = args[3];
+                    openUser = args[0];
+                    openId = args[1];
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Execução inválida. Inicie a partir do executável Java \"watt_app.jar\"", "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Execução inválida. Inicie a partir do executável Java \"watt_exec.jar\"", "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -109,7 +108,7 @@ public class Runner {
                 config.loadFile(UsefulMethods.getClassPath(Runner.class) + File.separator + "config" + File.separator + "options.xml");
 
                 try {
-                    URL url = new URL("http://10.0.4.70:1515/test");
+                    URL url = new URL("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/test");
                     URLConnection conn = url.openConnection();
                     conn.setConnectTimeout(1000);
                     conn.setReadTimeout(1000);
@@ -123,8 +122,7 @@ public class Runner {
                     JOptionPane.showMessageDialog(null, "Falha ao conectar-se ao banco de dados \"" + config.getContentByName("databaseName", 0)
                             + "\". Clique \"Ok\" para reiniciar.", "Erro", JOptionPane.ERROR_MESSAGE);
                     try {
-                        ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_runn.jar", openUser, openId,
-                                openTimeOfOpening, openTimeOfClose);
+                        ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_runn.jar", openUser, openId);
                         pb.directory(new File(UsefulMethods.getClassPath(Runner.class)));
                         pb.start();
                         System.exit(0);
@@ -173,7 +171,7 @@ public class Runner {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 try {
-                                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_app.jar");
+                                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Runner.class) + File.separator + "watt_exec.jar");
                                     pb.directory(new File(UsefulMethods.getClassPath(Runner.class)));
                                     pb.start();
                                     ArrayList<String> check = getAllRunningProcesses();
@@ -195,16 +193,17 @@ public class Runner {
                                     Hashtable<String, String> info = loginJOptionPane(null);
 
                                     if (!info.get("user").isEmpty() && !info.get("pass").isEmpty()) {
-                                        URL url = new URL("http://10.0.4.70:1515/login");
+                                        URL url = new URL("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/login");
                                         URLConnection con = url.openConnection();
                                         HttpURLConnection http = (HttpURLConnection) con;
                                         http.setRequestMethod("POST");
                                         http.setDoOutput(true);
 
                                         String s = "{\n"
-                                                + "\"login\":\"" + info.get("user") + "\",\n"
+                                                + "\"login\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, info.get("user")) + "\",\n"
                                                 + "\"senha\":\"" + Encrypter.encrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, info.get("pass")) + "\"\n"
                                                 + "}";
+
                                         byte[] out = s.getBytes(StandardCharsets.UTF_8);
                                         int length = out.length;
 
@@ -223,10 +222,12 @@ public class Runner {
                                         }
 
                                         String json = sb.toString();
+                                        json = Encrypter.decrypt(Encrypter.KEY, Encrypter.INIT_VECTOR, json);
                                         json = json.substring(1, json.length() - 1);
+                                        System.out.println(json);
                                         JSONObject obj = new JSONObject(json);
 
-                                        if (obj.getString("perfil").equals("Administrador")) {
+                                        if (obj.getString("perfil").toLowerCase().trim().equals("administrador")) {
                                             dialog.dispose();
                                             frame.dispose();
                                             adminOk = true;
@@ -254,13 +255,8 @@ public class Runner {
                         dialog.setLocationRelativeTo(null);
 
                         final String finalUser = openUser;
-                        final String finalIdUser = openUser;
-                        final String finalIdSetor = openIdSetor;
-//                        String openUser;
-//                String openId;
-//                String openIdSetor;
-//                String openTimeOfOpening;
-//                String openTimeOfClose = Long.toString(System.currentTimeMillis());
+                        final String finalIdUser = openId;
+
                         new Thread() {
                             @Override
                             public void run() {
@@ -277,20 +273,30 @@ public class Runner {
 
                                 if (!adminOk) {
                                     try {
-                                        URL url = new URL("http://10.0.4.70:1515/advertencia");
+                                        URL url = new URL("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/advertencia");
                                         URLConnection con = url.openConnection();
                                         HttpURLConnection http = (HttpURLConnection) con;
                                         http.setRequestMethod("POST");
                                         http.setDoOutput(true);
+                                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                                        String dataFormatada = format.format(new Date());
+                                        format = new SimpleDateFormat("HH:mm");
+                                        String hora = format.format(new Date());
+                                        Calendar cal = Calendar.getInstance();
+                                        cal.setTime(new Date());
+                                        if (cal.get(Calendar.AM_PM) == Calendar.PM) {
+                                            hora += " da tarde";
+                                        } else {
+                                            hora += " da manhã";
+                                        }
 
                                         String s = "{\n"
                                                 + "\"id_usuario\" : \"" + finalIdUser + "\",\n"
-                                                + "\"id_setor\" : \"" + finalIdSetor + "\",\n"
                                                 + "\"titulo\" : \"Mensagem do sistema - Falha com um dos Terminais\",\n"
                                                 + "\"mensagem\" : \"Esta é uma mensagem automática do sistema, sendo altamente recomendável que a situação relatada aqui "
-                                                + "seja conferida para que os fatos relatados aqui tenham total veemência.<br><br>Hoje (dia &date), as &date, houve um incidente "
-                                                + "com o terminal relacionado ao usuário " + finalUser + ". Essa mensagem diz respeito a um aviso enviado a tal usuário, e que "
-                                                + "o mesmo o ignorou, não relatou a nenhum administrador do sistema a já mencionada falha de hardware.<br><br>"
+                                                + "seja conferida para que os fatos relatados aqui tenham total veemência. Hoje (dia " + dataFormatada + "), as " + hora + ", "
+                                                + "houve um incidente com o terminal relacionado ao usuário " + finalUser + ". Essa mensagem diz respeito a um "
+                                                + "aviso enviado a tal usuário, e que o mesmo o ignorou, não relatou a nenhum administrador do sistema a já mencionada falha de hardware. "
                                                 + "É necessário que a unidade seja reparada o mais rápido possível, e que as medidas necessárias sejam tomadas para que a omissão "
                                                 + "não venha acontecer de novo.\"\n"
                                                 + "}";
@@ -319,7 +325,7 @@ public class Runner {
                                             System.exit(0);
                                         }
                                     } catch (Exception ex) {
-
+                                        ex.printStackTrace();
                                     }
                                 }
                             }

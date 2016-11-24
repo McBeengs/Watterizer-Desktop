@@ -66,7 +66,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class UsefulMethods {
-
+    
     public static final int OPTIONS = 0;
     public static final int LANGUAGE = 1;
     public static double CURRENT_KWH_CHARGE;
@@ -78,7 +78,7 @@ public class UsefulMethods {
     private static Font headerFont;
     private static UserModel model;
     private static PCModel pc;
-
+    
     public static String getOptions() {
         //get OS
         String os = System.getProperty("os.name").toLowerCase();
@@ -86,7 +86,7 @@ public class UsefulMethods {
 
         //get system path separator
         String separator = System.getProperty("file.separator");
-
+        
         if (os.contains("win")) {
             path = System.getProperty("user.home") + separator + "Documents" + separator + "Repository" + separator;
         } else if (os.contains("uni") || os.contains("nux") || os.contains("aix")) {
@@ -97,7 +97,7 @@ public class UsefulMethods {
             JOptionPane.showMessageDialog(null, "Seu sistema operacional não suporta o Java JRE 7 ou acima.");
             return null;
         }
-
+        
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<root>\n"
                 + "    <gui>\n"
@@ -120,7 +120,7 @@ public class UsefulMethods {
                 + "</root>\n"
                 + "";
     }
-
+    
     public static String getClassPath(Class<?> cls) {
         try {
             String path = cls.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -135,33 +135,32 @@ public class UsefulMethods {
         }
         return null;
     }
-
+    
     public static UserModel getUserModel() {
         return model;
     }
-
+    
     public static void setCurrentUserModel(UserModel model) {
         UsefulMethods.model = model;
     }
-
+    
     public static PCModel getPcModel() {
         if (pc != null) {
             return pc;
         } else {
             try {
                 pc = new PCModel();
-                InetAddress ip = InetAddress.getLocalHost();
                 Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
                 while (networks.hasMoreElements()) {
                     NetworkInterface network = networks.nextElement();
                     byte[] mac = network.getHardwareAddress();
-
+                    
                     if (mac != null) {
                         StringBuilder sb = new StringBuilder();
                         for (int i = 0; i < mac.length; i++) {
                             sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
                         }
-
+                        
                         String json;
                         if (sb.toString().length() == 17) {
                             System.out.println(sb.toString());
@@ -173,7 +172,12 @@ public class UsefulMethods {
                                     .parseInt(getManagerInstance(OPTIONS).getContentByName("webServicePort", 0)) + "/equipamentocheck", "POST", s);
                             json = json.substring(1, json.length() - 1);
                             JSONObject obj = new JSONObject(json);
-                            pc.setArduinoId(obj.getInt("id_arduino"));
+                            
+                            try {
+                                pc.setArduinoId(obj.getInt("id_arduino"));
+                            } catch (Exception ex) {
+                                pc.setArduinoId(-1);
+                            }
                             if (!json.isEmpty()) {
                                 pc.setMac(sb.toString());
                                 break;
@@ -187,15 +191,15 @@ public class UsefulMethods {
             }
         }
     }
-
+    
     public static void saveCurrentUserModel() {
-
+        
     }
-
+    
     public static String getWebServiceResponse(String url, String method, String json) throws MalformedURLException, ProtocolException, IOException {
         return getWebServiceResponse(url, method, null, null, json);
     }
-
+    
     public static String getWebServiceResponse(String url, String method, String[] requestKeys,
             String[] requestValues, String json) throws MalformedURLException, ProtocolException, IOException {
         URL u = new URL(url);
@@ -205,59 +209,59 @@ public class UsefulMethods {
         http.setDoOutput(true);
         String output;
         StringBuilder sb;
-
+        
         if (json != null && requestKeys == null && requestValues == null) {
             byte[] out = json.getBytes(StandardCharsets.UTF_8);
             int length = out.length;
-
+            
             http.setFixedLengthStreamingMode(length);
             http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
             http.connect();
             try (OutputStream os = http.getOutputStream()) {
                 os.write(out);
             }
-
+            
             BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
             sb = new StringBuilder();
             while ((output = br.readLine()) != null) {
                 sb.append(output);
             }
-
+            
             return sb.toString();
         } else if (requestKeys != null && requestValues != null && requestKeys.length == requestValues.length) {
             if (json != null) {
                 byte[] out = json.getBytes(StandardCharsets.UTF_8);
                 int length = out.length;
-
+                
                 http.setFixedLengthStreamingMode(length);
                 for (int i = 0; i < requestKeys.length; i++) {
                     http.setRequestProperty(requestKeys[i], requestValues[i]);
                 }
-
+                
                 http.connect();
                 try (OutputStream os = http.getOutputStream()) {
                     os.write(out);
                 }
-
+                
                 BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
                 sb = new StringBuilder();
                 while ((output = br.readLine()) != null) {
                     sb.append(output);
                 }
-
+                
                 return sb.toString();
             } else {
                 for (int i = 0; i < requestKeys.length; i++) {
                     http.setRequestProperty(requestKeys[i], requestValues[i]);
                 }
                 http.connect();
-
+                
                 BufferedReader br = new BufferedReader(new InputStreamReader((http.getInputStream())));
                 sb = new StringBuilder();
                 while ((output = br.readLine()) != null) {
                     sb.append(output);
                 }
-
+                
                 return sb.toString();
             }
         } else {
@@ -267,30 +271,30 @@ public class UsefulMethods {
             while ((output = br.readLine()) != null) {
                 sb.append(output);
             }
-
+            
             return sb.toString();
         }
     }
-
+    
     public static XmlManager getManagerInstance(int manager) {
         if (manager == OPTIONS && options != null) {
             return options;
         } else if (manager == LANGUAGE && language != null) {
             return language;
         }
-
+        
         options = new XmlManager();
         boolean checkOS = false;
-
+        
         File getConfig = new File(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "config");
         if (!getConfig.exists()) {
             getConfig.mkdir();
         }
-
+        
         File getOptions = new File(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
         if (!getOptions.exists()) {
             String content = UsefulMethods.getOptions();
-
+            
             if (content != null) {
                 try {
                     getOptions.createNewFile();
@@ -304,7 +308,7 @@ public class UsefulMethods {
                 checkOS = true;
             }
         }
-
+        
         options.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
         switch (manager) {
             case OPTIONS:
@@ -315,14 +319,14 @@ public class UsefulMethods {
                     String temp = options.getContentByName("language", 0);
                     language.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "language"
                             + File.separator + temp.toLowerCase() + ".xml");
-
+                    
                     return language;
                 }
         }
-
+        
         return null;
     }
-
+    
     public static ArduinoBridge getArduinoInstance() throws IOException {
         if (bridge != null) {
             return bridge;
@@ -336,21 +340,21 @@ public class UsefulMethods {
             }
         }
     }
-
+    
     public static void updateManagersInstances() {
         UsefulMethods get = new UsefulMethods();
         options = new XmlManager();
         String separator = System.getProperty("file.separator");
-
+        
         File getConfig = new File(UsefulMethods.getClassPath(get.getClass()) + separator + "config");
         if (!getConfig.exists()) {
             getConfig.mkdir();
         }
-
+        
         File getOptions = new File(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
         if (!getOptions.exists()) {
             String content = UsefulMethods.getOptions();
-
+            
             if (content != null) {
                 try {
                     getOptions.createNewFile();
@@ -361,7 +365,7 @@ public class UsefulMethods {
                 }
             }
         }
-
+        
         options.loadFile(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
         language = new XmlManager();
         String temp = options.getContentByName("language", 0);
@@ -376,7 +380,7 @@ public class UsefulMethods {
     public static void setIsShutdownTrue(boolean bl) {
         isShutdownTrue = bl;
     }
-
+    
     public static Font getHeaderFont() {
         if (headerFont != null) {
             return headerFont;
@@ -395,23 +399,23 @@ public class UsefulMethods {
             }
         }
     }
-
+    
     public static InputStream downloadFile(String source) throws IOException {
         if (ftp == null) {
             ftp = new FTPClient();
             ftp.connect(getManagerInstance(OPTIONS).getContentByName("webServiceHost", 0), 21);
-
+            
             if (!FTPReply.isPositiveCompletion(ftp.getReplyCode())) {
                 System.err.println("FTP connection failed");
                 return null;
             }
-
+            
             ftp.login("watterizer", "senairianos115");
         }
-
+        
         return ftp.retrieveFileStream(source);
     }
-
+    
     public static boolean uploadFile(String localFilePath, String fileName, String hostDir) throws IOException {
         try {
             InputStream input = new FileInputStream(new File(localFilePath));
@@ -425,21 +429,21 @@ public class UsefulMethods {
             return false;
         }
     }
-
+    
     public static void makeHyperlinkOptionPane(String[] message, String link, int linkIndex, int messageType, String messageTitle) {
         JOptionPane pane = new JOptionPane(null, messageType);
-
+        
         StringBuilder style = new StringBuilder("font-family:" + pane.getFont().getFamily() + ";");
         style.append("font-weight:").append(pane.getFont().isBold() ? "bold" : "normal").append(";");
         style.append("font-size:").append(pane.getFont().getSize()).append("pt;");
         style.append("background-color: rgb(").append(pane.getBackground().getRed()).append(", ")
                 .append(pane.getBackground().getGreen()).append(", ").append(pane.getBackground().getBlue()).append(");");
-
+        
         JEditorPane ep = new JEditorPane();
         ep.setEditorKit(JEditorPane.createEditorKitForContentType("text/html"));
         ep.setEditable(false);
         ep.setBorder(null);
-
+        
         String show = "";
         for (int i = 0; i < message.length; i++) {
             if (i != linkIndex) {
@@ -448,32 +452,32 @@ public class UsefulMethods {
                 show += " <a href=\"" + link + "\">" + message[i] + "</a>";
             }
         }
-
+        
         ep.setText("<html><body style=\"" + style + "\">" + show + "</body></html>");
-
+        
         ep.addHyperlinkListener((HyperlinkEvent e) -> {
             if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
                 try {
                     Desktop.getDesktop().browse(e.getURL().toURI());
                 } catch (IOException | URISyntaxException ex) {
-
+                    
                 }
             }
         });
-
+        
         JOptionPane.showMessageDialog(null, ep, messageTitle, messageType);
     }
-
+    
     public static String getSimpleDateFormat() {
         Calendar date = Calendar.getInstance();
-
+        
         return date.getDisplayName(2, 2, Locale.US) + " " + date.get(Calendar.DATE) + ", " + date.get(Calendar.YEAR);
     }
     
     public static void makeBalloon(final JComponent component, final String text, final long time, final Color color) {
         makeBalloon(component, text, time, 0, color);
     }
-
+    
     public static void makeBalloon(final JComponent component, final String text, final long time, final long delay, final Color color) {
         new Thread("Showing ballon \"" + text + "\"") {
             @Override

@@ -181,8 +181,13 @@ public class Starter {
         String s = "{"
                 + "\"valor\":" + style.getContentByName("kwh", 0)
                 + "}";
-        UsefulMethods.getWebServiceResponse("http://" + style.getContentByName("webServiceHost", 0) + ":" + style.getContentByName("webServicePort", 0)
-                + "/kilowatt", "POST", s);
+        try {
+            UsefulMethods.getWebServiceResponse("http://" + style.getContentByName("webServiceHost", 0) + ":" + style.getContentByName("webServicePort", 0)
+                    + "/kilowatt", "POST", s);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Falha com o banco de dados. O aplicativo está sendo encerrado.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
 
         new Thread("Shutdown Hook") {
             @Override

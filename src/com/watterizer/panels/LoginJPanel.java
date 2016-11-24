@@ -5,6 +5,7 @@
  */
 package com.watterizer.panels;
 
+import com.watterizer.Starter;
 import com.watterizer.modals.MainSeederJFrame;
 import com.watterizer.crypto.Encrypter;
 import com.watterizer.modals.MainLeecherJFrame;
@@ -16,7 +17,10 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -333,6 +337,7 @@ public class LoginJPanel extends javax.swing.JPanel {
             @Override
             public void run() {
                 try {
+                    System.out.println(xml);
                     xml.saveXml();
 
                     String s = "{\n"
@@ -368,6 +373,15 @@ public class LoginJPanel extends javax.swing.JPanel {
                         } else {
                             new MainLeecherJFrame().setVisible(true);
                         }
+
+                        String path = Starter.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                        String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
+                        decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+                        if (decodedPath.contains("watt_exec.jar")) {
+                            ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Starter.class) + File.separator + "watt_runn.jar", model.getNome(), "" + model.getId());
+                            pb.directory(new File(UsefulMethods.getClassPath(Starter.class)));
+                            pb.start();
+                        }
                         rootScreen.close();
 
                     } catch (JSONException | ParseException ex) {
@@ -388,7 +402,7 @@ public class LoginJPanel extends javax.swing.JPanel {
             }
         }.start();
     }
-    
+
     private JPanel getPanel() {
         return this;
     }

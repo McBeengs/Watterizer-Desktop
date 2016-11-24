@@ -306,10 +306,12 @@ public class SplashScreen extends javax.swing.JFrame {
                 String s = "{"
                         + "\"mac\":\"" + UsefulMethods.getPcModel().getMac() + "\""
                         + "}";
+                System.err.println(s);
 
                 UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
                         + xml.getContentByName("webServicePort", 0) + "/pcligado", "POST", s);
             } catch (Exception ex) {
+                ex.printStackTrace();
                 errorDetail = language.getContentById("dbFailure");
                 throw new Exception("DB");
             }

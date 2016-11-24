@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <gui>
+    <language attr="0">Português</language>
+    <style attr="0">Metal</style>
+    <webServiceHost>10.0.3.28</webServiceHost>
+    <webServicePort>1515</webServicePort>
+    <socketPort>3000</socketPort>
+    <terminalType>0</terminalType>
+    <autoLogin>true</autoLogin>
+    <kwh>0.2345</kwh>
+    <user>WCwLwn04k8xqKrTWuBCx8Q==</user>
+    <pass>WCwLwn04k8xqKrTWuBCx8Q==</pass>
+  </gui>
+  <debug>
+    <boolean id="isDebugActive">false</boolean>
+    <boolean id="saveLog">true</boolean>
+    <boolean id="offlineMode">false</boolean>
+  </debug>
+</root>

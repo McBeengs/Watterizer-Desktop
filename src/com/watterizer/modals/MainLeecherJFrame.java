@@ -6,7 +6,6 @@
 package com.watterizer.modals;
 
 import java.awt.AWTException;
-import java.awt.Frame;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -24,11 +23,6 @@ import javax.swing.JFrame;
 public class MainLeecherJFrame extends JFrame{
     
     public MainLeecherJFrame() {
-        setSize(1, 1);
-        setUndecorated(true);
-        
-        setState(JFrame.ICONIFIED);
-        
         if (SystemTray.isSupported()) {
             addWindowListener(new WindowAdapter() {
                 @Override
@@ -42,10 +36,6 @@ public class MainLeecherJFrame extends JFrame{
                     });
                     popup.add(defaultItem);
                     TrayIcon trayIcon = new TrayIcon(new ImageIcon(getClass().getResource("/com/watterizer/style/icons/ic_logo_16.png")).getImage(), "Watterizer", popup);
-                    trayIcon.addActionListener((ActionEvent e1) -> {
-                        setVisible(true);
-                        setState(Frame.NORMAL);
-                    });
 
                     try {
                         tray.add(trayIcon);
@@ -67,5 +57,10 @@ public class MainLeecherJFrame extends JFrame{
                 }
             });
         }
+        
+//        setSize(1, 1);
+//        setUndecorated(true);
+        setState(JFrame.ICONIFIED);
+        setVisible(false);
     }
 }
