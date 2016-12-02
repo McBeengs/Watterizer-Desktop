@@ -3,9 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.watterizer.panels;
+package com.watterizer.modals;
 
-import com.watterizer.modals.FirstUseSetupJFrame;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import java.awt.Font;

@@ -18,9 +18,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -368,27 +366,42 @@ public class LoginJPanel extends javax.swing.JPanel {
                         model.setTokenDesktop(obj.getString("token_desktop"));
                         UsefulMethods.setCurrentUserModel(model);
 
-                        if (xml.getContentByName("terminalType", 0).equals("0") && model.getPerfil().equals("administrador")) {
+                        if (xml.getContentByName("terminalType", 0).equals("0") && model.getPerfil().toLowerCase().equals("administrador")) {
                             new MainSeederJFrame().setVisible(true);
+                            System.err.println("painel seeder iniciado");
                         } else {
                             new MainLeecherJFrame().setVisible(true);
+                            System.err.println("painel leecher iniciado");
                         }
 
-                        String path = Starter.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-                        String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
-                        decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
-                        if (decodedPath.contains("watt_exec.jar")) {
-                            ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Starter.class) + File.separator + "watt_runn.jar", model.getNome(), "" + model.getId());
-                            pb.directory(new File(UsefulMethods.getClassPath(Starter.class)));
-                            pb.start();
+                        if (xml.getContentByName("lastEnd", 0).equals("false")) {
+                            System.err.println("última saída inválida");
+                            String path = LoginJPanel.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                            String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
+                            decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+                            if (decodedPath.contains("watt_exec.jar")) {
+                                try {
+                                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Starter.class) + File.separator + "watt_runn.jar",
+                                            UsefulMethods.getUserModel().getNome(), "" + UsefulMethods.getUserModel().getId());
+                                    pb.directory(new File(UsefulMethods.getClassPath(Starter.class)));
+                                    pb.start();
+                                    System.err.println("watt_runn.jar iniciado");
+                                } catch (Exception ex) {
+                                    Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
                         }
+
+                        xml.setContentByName("lastEnd", 0, "false");
+                        xml.saveXml();
+
                         rootScreen.close();
 
                     } catch (JSONException | ParseException ex) {
                         errorLog.setText("Login inválido");
                         paintInput(0, 1);
                         paintInput(1, 1);
-                        ex.printStackTrace();
+                        Logger.getLogger(LoginJPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
 
                     userInput.setEnabled(true);

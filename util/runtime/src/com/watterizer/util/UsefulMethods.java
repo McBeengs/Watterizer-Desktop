@@ -21,7 +21,6 @@ import java.awt.Desktop;
 import java.io.UnsupportedEncodingException;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -44,29 +43,6 @@ public class UsefulMethods {
     private static XmlManager language;
     private static Connection conn = null;
 
-    public static String getOptions() {
-        //get OS
-        String os = System.getProperty("os.name").toLowerCase();
-        String path;
-
-        //get system path separator
-        String separator = System.getProperty("file.separator");
-
-        if (os.contains("win")) {
-            path = System.getProperty("user.home") + separator + "Documents" + separator + "Repository" + separator;
-        } else if (os.contains("uni") || os.contains("nux") || os.contains("aix")) {
-            path = System.getProperty("user.home") + separator + "Repository" + separator;
-        } else if (os.contains("mac")) {
-            path = System.getProperty("user.home") + "";
-        } else {
-            JOptionPane.showMessageDialog(null, "Seu sistema operacional não suporta o Java JRE 7 ou acima.");
-            return null;
-        }
-
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<exec>watt_app.jar</exec>";
-    }
-
     public static String getClassPath(Class<?> cls) {
         try {
             String path = cls.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -81,89 +57,6 @@ public class UsefulMethods {
             Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
-    }
-
-    public static XmlManager getManagerInstance(int manager) {
-        if (manager == OPTIONS && options != null) {
-            return options;
-        } else if (manager == LANGUAGE && language != null) {
-            return language;
-        }
-
-        options = new XmlManager();
-        boolean checkOS = false;
-
-        File getConfig = new File(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "config");
-        if (!getConfig.exists()) {
-            getConfig.mkdir();
-        }
-
-        File getOptions = new File(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
-        if (!getOptions.exists()) {
-            String content = UsefulMethods.getOptions();
-
-            if (content != null) {
-                try {
-                    getOptions.createNewFile();
-                    PrintWriter writer = new PrintWriter(getOptions);
-                    writer.print(content);
-                    writer.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(UsefulMethods.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            } else {
-                checkOS = true;
-            }
-        }
-
-        options.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
-        switch (manager) {
-            case OPTIONS:
-                return options;
-            case LANGUAGE:
-                if (!checkOS) {
-                    language = new XmlManager();
-                    String temp = options.getContentByName("language", 0);
-                    language.loadFile(UsefulMethods.getClassPath(UsefulMethods.class) + File.separator + "language"
-                            + File.separator + temp.toLowerCase() + ".xml");
-
-                    return language;
-                }
-        }
-
-        return null;
-    }
-
-    public static void updateManagersInstances() {
-        UsefulMethods get = new UsefulMethods();
-        options = new XmlManager();
-        String separator = System.getProperty("file.separator");
-
-        File getConfig = new File(UsefulMethods.getClassPath(get.getClass()) + separator + "config");
-        if (!getConfig.exists()) {
-            getConfig.mkdir();
-        }
-
-        File getOptions = new File(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
-        if (!getOptions.exists()) {
-            String content = UsefulMethods.getOptions();
-
-            if (content != null) {
-                try {
-                    getOptions.createNewFile();
-                    PrintWriter writer = new PrintWriter(getOptions);
-                    writer.print(content);
-                } catch (IOException ex) {
-                    Logger.getLogger(get.getClass().getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
-
-        options.loadFile(UsefulMethods.getClassPath(get.getClass()) + "config" + separator + "options.xml");
-        language = new XmlManager();
-        String temp = options.getContentByName("language", 0);
-        temp = temp.substring(0, temp.indexOf(","));
-        language.loadFile(UsefulMethods.getClassPath(get.getClass()) + separator + "language" + separator + temp.toLowerCase() + ".xml");
     }
 
     public static long getTimeOfOpening() {

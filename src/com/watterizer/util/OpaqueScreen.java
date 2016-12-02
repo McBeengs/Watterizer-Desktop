@@ -26,7 +26,7 @@ public class OpaqueScreen {
 
     private JFrame frame = new JFrame();
     private static int INSTANCES = 0;
-    private Thread thread = new Thread(() -> {
+    private final Thread thread = new Thread(() -> {
         while (frame != null) {
             try {
                 Runtime.getRuntime().exec("taskkill /F /IM " + "taskmgr.exe").waitFor();

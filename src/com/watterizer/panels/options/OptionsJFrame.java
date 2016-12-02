@@ -22,7 +22,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class OptionsJFrame extends javax.swing.JFrame {
 
-    private String originalContent;
+    private final String originalContent;
     private DefaultTreeModel model;
     private DefaultMutableTreeNode hierarchy;
     private DefaultMutableTreeNode batch;
@@ -31,6 +31,7 @@ public class OptionsJFrame extends javax.swing.JFrame {
     private final XmlManager language;
 
     public OptionsJFrame() {
+        setTitle("Opções - Watterizer");
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
         language = UsefulMethods.getManagerInstance(UsefulMethods.LANGUAGE);
 
@@ -43,13 +44,11 @@ public class OptionsJFrame extends javax.swing.JFrame {
         c = new GridBagConstraints();
 
         Option1 o1 = new Option1(xml);
-        Option2 o2 = new Option2(xml);
         
         o1.setVisible(true);
         c.gridx = 0;
         c.gridy = 0;
         mainContainer.add(o1, c);
-        mainContainer.add(o2, c);
 
         optionsTree.addMouseListener(new MouseAdapter() {
             @Override
@@ -57,15 +56,12 @@ public class OptionsJFrame extends javax.swing.JFrame {
                 switch (optionsTree.getSelectionModel().getLeadSelectionRow()) {
                     case 0:
                         o1.setVisible(false);
-                        o2.setVisible(false);
                         break;
                     case 1:
                         o1.setVisible(true);
-                        o2.setVisible(false);
                         break;
                     case 2:
                         o1.setVisible(false);
-                        o2.setVisible(true);
                         break;
                     default:
                         break;
@@ -85,10 +81,9 @@ public class OptionsJFrame extends javax.swing.JFrame {
         hierarchy.add(section1);
 
         //Sets all the options pulled from the file... 
-        String[] section1Ops = new String[2];
+        String[] section1Ops = new String[1];
 
         section1Ops[0] = "Opções Gerais";
-        section1Ops[1] = "Equipamentos";
 
         //... and sets them to the section
         for (String section1Op : section1Ops) {

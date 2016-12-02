@@ -8,16 +8,12 @@ package com.watterizer.modals;
 import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.models.PCModel;
 import com.watterizer.net.SocketNodeJS;
-import com.watterizer.panels.Milagre;
-import com.watterizer.panels.NewEquipmentJFrame;
-import com.watterizer.panels.SelectConfig;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
 import gnu.io.CommPortIdentifier;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -35,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -45,8 +40,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -54,7 +47,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.event.CaretEvent;
 import javax.swing.table.DefaultTableModel;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -72,12 +64,11 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     private int currentPanel = 0;
     private String wsHostTemp;
     private String wsPortTemp;
-    private JFrame terminalFrame;
-    private int terminalSelected = 0;
     boolean isMacSelected = false;
     boolean isSetorSelected = false;
     boolean isLastScreen = false;
     public static ArrayList<Equipment> insertEquipments = new ArrayList<>();
+    private String insertArduino;
     private static JTable equipmentsTable;
     private static DefaultTableModel tableModel;
 
@@ -109,10 +100,10 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
     public FirstUseSetupJFrame(XmlManager xml) {
         initComponents();
+        setTitle("Auxiliar de Configurações Iniciais - Watterizer");
         FirstUseSetupJFrame.xml = xml;
         contentPane.setLayout(new GridBagLayout());
         contentPane.add(getWelcomePanel());
-        setTitle("Watterizer - Auxiliar de configuração inicial");
 
         c.gridx = 0;
         c.gridy = 0;
@@ -134,6 +125,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
             if (isLastScreen) {
                 try {
+                    UsefulMethods.setIsShutdownTrue(true);
                     xml.saveXml();
                     System.out.println(xml.toString());
                     System.out.println("salvo xml");
@@ -146,7 +138,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                     + "}";
                             System.out.println(s);
                             arduinoId = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/arduino", "POST", s);
-                            System.out.println("arduino cadastrado");
+                            System.err.println("arduino cadastrado");
                         }
 
                         String s = "{"
@@ -158,6 +150,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
                         s += "   \"descricao\":\"" + "" + "\", "
                                 + "   \"posicionado\":\"0\", "
+                                + "   \"id_setor\":\"" + model.getSetorId() + "\", "
                                 + "   \"command\":\"create\""
                                 + "}";
                         UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/equipamentocheck", "POST", s);
@@ -170,15 +163,17 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                                     + "   \"descricao\":\"" + equip.descricao + "\", "
                                     + "   \"posicionado\":\"" + equip.posicionado + "\", "
                                     + "   \"numero_porta\":" + equip.numeroPorta + ", "
+                                    + "   \"id_setor\":\"" + model.getSetorId() + "\", "
                                     + "   \"command\":\"create\""
                                     + "}";
                             UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/equipamentocheck", "POST", s);
                         }
-                        System.out.println("salvo no banco");
+                        System.err.println("salvo no banco");
                     } else {
                         System.err.println("pulado salvar banco");
                     }
-                    System.err.println("abrir watt_exec.jar");
+                    ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(FirstUseSetupJFrame.class) + File.separator + "watt_exec.jar");
+                    pb.start();
                     System.exit(0);
                 } catch (IOException ex) {
                     Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -300,14 +295,11 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         }
     }
 
-    private String pcName;
-
     private void nextPanel() {
         currentPanel++;
         next.setEnabled(false);
         next.setText("Próximo");
         contentPane.removeAll();
-        ArrayList<String> macs = new ArrayList<>();
 
         if (currentPanel == 1) {
             EventQueue.invokeLater(() -> {
@@ -317,108 +309,25 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
             });
         } else if (currentPanel == 2) {
             EventQueue.invokeLater(() -> {
-                String json = "";
-                try {
-                    boolean isSaved = false;
-                    InetAddress ip = InetAddress.getLocalHost();
-                    Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
-
-                    macs.add("- Selecione um MAC -");
-                    while (networks.hasMoreElements()) {
-                        NetworkInterface network = networks.nextElement();
-                        byte[] mac = network.getHardwareAddress();
-
-                        if (mac != null) {
-                            StringBuilder sb = new StringBuilder();
-                            for (int i = 0; i < mac.length; i++) {
-                                sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
-                            }
-
-                            if (sb.toString().length() == 17) {
-                                macs.add(sb.toString());
-                                if (!isSaved) {
-                                    String s = "{"
-                                            + "\"mac\" : \"" + sb.toString() + "\","
-                                            + "\"command\" : \"check\""
-                                            + "}";
-                                    json = UsefulMethods.getWebServiceResponse("http://" + wsHostTemp + ":" + wsPortTemp + "/equipamentocheck", "POST", s);
-                                    json = json.substring(1, json.length() - 1);
-                                    if (!json.isEmpty()) {
-                                        isSaved = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    pcName = ip.getHostName();
-                    if (isSaved) {
-                        System.out.println(json);
-                        if (JOptionPane.showConfirmDialog(null, getConfiguredTerminalPane(json), "Aviso",
-                                JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
-                            next.setEnabled(true);
-                            isLastScreen = true;
-                            next.setText("Sair");
-                            contentPane.add(getEndPanel(), c);
-                            contentPane.revalidate();
-                            contentPane.repaint();
-                            return;
-                        }
-                    }
-
-                    terminalFrame = new JFrame("Watterizer - Escolher tipo do terminal");
-                    JPanel terminal = getTerminalSelectionPane();
-                    terminalFrame.setContentPane(terminal);
-                    terminalFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                    terminalFrame.setSize(new Dimension(terminal.getWidth(), terminal.getHeight()));
-                    terminalFrame.pack();
-                    terminalFrame.setLocationRelativeTo(null);
-                    terminalFrame.setVisible(true);
-//                    String json = UsefulMethods.getWebServiceResponse("http://" + wsHostTemp + ":" + wsPortTemp + "/arduino", "GET", null);
-//                    JSONArray array = new JSONArray(json);
-//                    if (array.length() <= 0) {
-//                        contentPane.add(getCheckArduinoPane(), c);
-//                        contentPane.revalidate();
-//                        contentPane.repaint();
-//                        return;
-//                    } else {
-//
-//                    }
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "A conexão com o banco de dados caiu inesperadamente. Infelizmente o auxiliar terá que ser encerrado", wsHostTemp, WIDTH);
-                    System.exit(0);
-                } catch (JSONException ex) {
-                    Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                JPanel pane = getTerminalPanel();
+                if (pane == null) {
+                    contentPane.removeAll();
+                    EventQueue.invokeLater(() -> {
+                        previous.setEnabled(false);
+                        next.setEnabled(true);
+                        isLastScreen = true;
+                        next.setText("Sair");
+                        contentPane.add(getEndPanel(), c);
+                        contentPane.revalidate();
+                        contentPane.repaint();
+                    });
+                } else {
+                    contentPane.add(pane, c);
+                    contentPane.revalidate();
+                    contentPane.repaint();
                 }
-
-//                JPanel pane = getTerminalPanel();
-//                if (pane == null) {
-//                    contentPane.removeAll();
-//                    EventQueue.invokeLater(() -> {
-//                        previous.setEnabled(false);
-//                        next.setEnabled(true);
-//                        isLastScreen = true;
-//                        next.setText("Sair");
-//                        contentPane.add(getEndPanel(), c);
-//                        contentPane.revalidate();
-//                        contentPane.repaint();
-//                    });
-//                } else {
-//                    contentPane.add(pane, c);
-//                    contentPane.revalidate();
-//                    contentPane.repaint();
-//                }
             });
             previous.setEnabled(true);
-        } else if (!isLastScreen && currentPanel == 3) {
-            if (terminalSelected == 0) {
-                next.setEnabled(true);
-                isLastScreen = true;
-                next.setText("Sair");
-                contentPane.add(new Milagre(), c);
-                contentPane.revalidate();
-                contentPane.repaint();
-            }
         } else if (!isLastScreen && currentPanel == 3 && model.getType() == 1) {
             EventQueue.invokeLater(() -> {
                 next.setEnabled(true);
@@ -525,7 +434,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         errorText.setText("<html><body style=\"text-align: justify;\">   Antes de mais nada, precisamos estabelecer uma conexão entre o servidor para que as etapas seguintes "
                 + "sejam configuradas. Caso não saiba os campos abaixo, entre em contato com o responsável pela arquitetura do sistema.</body></html>");
         errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        setTitle("Watterizer - Conexão com o WebService");
 
         Font header = UsefulMethods.getHeaderFont();
         header = header.deriveFont(Font.PLAIN, 40);
@@ -536,7 +444,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         errorText1.setForeground(new java.awt.Color(255, 255, 255));
         errorText1.setText("Url:");
 
-        jTextField1.setText("10.0.3.28");
+        jTextField1.setText("10.0.4.70");
         jTextField1.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -742,11 +650,11 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("element-type-mismatch")
-    private JPanel getTerminalPanel(String pcName, ArrayList<String> macs) {
-
+    private JPanel getTerminalPanel() {
+        String pcName = "";
+        ArrayList<String> macs = new ArrayList<>();
         ArrayList<String> setoresDisplay = new ArrayList<>();
         Map<Integer, String> setores = new HashMap<>();
-        setTitle("Watterizer - Configurar Terminal");
 
         try {
             String json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
@@ -773,6 +681,50 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                     setoresDisplay.add(obj.getString("setor"));
                 }
             }
+
+            boolean isSaved = false;
+            InetAddress ip = InetAddress.getLocalHost();
+            Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
+
+            macs.add("- Selecione um MAC -");
+            while (networks.hasMoreElements()) {
+                NetworkInterface network = networks.nextElement();
+                byte[] mac = network.getHardwareAddress();
+
+                if (mac != null) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < mac.length; i++) {
+                        sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+                    }
+
+                    if (sb.toString().length() == 17) {
+                        macs.add(sb.toString());
+                        if (!isSaved) {
+                            String s = "{"
+                                    + "\"mac\" : \"" + sb.toString() + "\","
+                                    + "\"command\" : \"check\""
+                                    + "}";
+                            json = UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + Integer
+                                    .parseInt(xml.getContentByName("webServicePort", 0)) + "/equipamentocheck", "POST", s);
+                            json = json.substring(1, json.length() - 1);
+                            if (!json.isEmpty()) {
+                                isSaved = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isSaved) {
+                System.out.println(json);
+                if (JOptionPane.showConfirmDialog(null, getConfiguredTerminalPane(json), "Aviso",
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                    isLastScreen = true;
+                    return null;
+                }
+            }
+
+            pcName = ip.getHostName();
         } catch (NumberFormatException | IOException | HeadlessException | JSONException | URISyntaxException ex) {
             Logger.getLogger(FirstUseSetupJFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -897,7 +849,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
             } else {
                 next.setEnabled(false);
             }
-            //jComboBox2.getSelectedItem().toString()
         });
 
         label4.setForeground(new java.awt.Color(255, 255, 255));
@@ -1018,16 +969,12 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
     private JPanel getCheckArduinoPane() {
         JPanel pane = new JPanel();
         javax.swing.JLabel text = new javax.swing.JLabel();
-        javax.swing.JLabel top1 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
+        javax.swing.JLabel top1 = new javax.swing.JLabel();
         javax.swing.JComboBox jComboBox1 = new javax.swing.JComboBox<>();
         javax.swing.JLabel updateButton = new javax.swing.JLabel();
         javax.swing.JButton jButton1 = new javax.swing.JButton();
         javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
-        javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
-        javax.swing.JTextArea descricaoText = new javax.swing.JTextArea();
-        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
-        setTitle("Watterizer - Conexão com o Arduino");
 
         next.setEnabled(false);
 
@@ -1041,13 +988,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Porta:");
-
-        descricaoText.setColumns(20);
-        descricaoText.setRows(5);
-        jScrollPane1.setViewportView(descricaoText);
-
-        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("Descrição:");
 
         updateButton.setForeground(new java.awt.Color(255, 255, 255));
         updateButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/lilCog.png"))); // NOI18N
@@ -1078,59 +1018,63 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(updateList()));
 
+        jComboBox1.addActionListener((ActionEvent ae) -> {
+            xml.setContentByName("arduinoPort", 0, jComboBox1.getSelectedItem().toString().trim());
+        });
+
+        xml.setContentByName("arduinoPort", 0, jComboBox1.getSelectedItem().toString().trim());
         jButton1.setText("Testar");
         jButton1.addActionListener((ActionEvent ae) -> {
-            if (!descricaoText.getText().isEmpty()) {
-                response = false;
-                jLabel3.setVisible(true);
-                jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
-                jLabel3.setForeground(Color.white);
-                jLabel3.setText("Testando...");
-                ArduinoBridge b = new ArduinoBridge(jComboBox1.getSelectedItem().toString().trim());
-                if (b.waitForConnection(100)) {
-                    b.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
-                        response = true;
-                    });
+            response = false;
+            jLabel3.setVisible(true);
+            jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/spinner.gif")));
+            jLabel3.setForeground(Color.white);
+            jLabel3.setText("Testando...");
+            ArduinoBridge b = new ArduinoBridge(jComboBox1.getSelectedItem().toString().trim());
+            if (b.waitForConnection(100)) {
+                b.addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
+                    response = true;
+                });
 
-                    final long end = System.currentTimeMillis() + 5000;
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            while (System.currentTimeMillis() < end) {
-                                //não apague essa linha
-                                System.out.print(response);
-                                if (response) {
-                                    jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/ok.png")));
-                                    jLabel3.setForeground(new java.awt.Color(50, 205, 50));
-                                    jLabel3.setText("Conexão estabelecida.");
-                                    System.out.println("yes");
-                                    next.setEnabled(true);
-                                    b.close();
-
-                                    insertArduino = "{"
-                                            + "\"id_setor\":\"" + model.getSetorId() + "\","
-                                            + "\"localizacao\":\"" + descricaoText.getText() + "\","
-                                            + "\"id_computador_responsavel\":\"0\""
-                                            + "}";
-                                    break;
-                                }
-                            }
-                            if (!response) {
-                                jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/error2.png")));
-                                jLabel3.setForeground(new java.awt.Color(238, 44, 44));
-                                jLabel3.setText("Falha com a conexão.");
+                final long end = System.currentTimeMillis() + 5000;
+                new Thread() {
+                    @Override
+                    public void run() {
+                        while (System.currentTimeMillis() < end) {
+                            //não apague essa linha
+                            System.out.print(response);
+                            if (response) {
+                                jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/ok.png")));
+                                jLabel3.setForeground(new java.awt.Color(50, 205, 50));
+                                jLabel3.setText("Conexão estabelecida.");
+                                System.out.println("yes");
+                                next.setEnabled(true);
                                 b.close();
+
+                                insertArduino = "{"
+                                        + "\"id_setor\":\"" + model.getSetorId() + "\","
+                                        + "\"localizacao\":\"\","
+                                        + "\"id_computador_responsavel\":\"0\""
+                                        + "}";
+                                break;
                             }
                         }
-                    }.start();
+                        if (!response) {
+                            jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/error2.png")));
+                            jLabel3.setForeground(new java.awt.Color(238, 44, 44));
+                            jLabel3.setText("Falha com a conexão.");
+                            b.close();
+                        }
+                    }
+                }.start();
 
-                } else {
-                    jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/error2.png")));
-                    jLabel3.setForeground(new java.awt.Color(238, 44, 44));
-                    jLabel3.setText("Falha com a conexão.");
-                    b.close();
-                }
+            } else {
+                jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/error2.png")));
+                jLabel3.setForeground(new java.awt.Color(238, 44, 44));
+                jLabel3.setText("Falha com a conexão.");
+                b.close();
             }
+
         });
 
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
@@ -1218,7 +1162,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
         equipmentsTable = new JTable();
         javax.swing.JButton jButton1 = new javax.swing.JButton();
-        setTitle("Watterizer - Adicionar Equipamentos");
 
         setBackground(new java.awt.Color(0, 0, 0));
 
@@ -1264,7 +1207,7 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
                     int rowindex = equipmentsTable.getSelectedRow();
                     if (rowindex > 0) {
                         JPopupMenu popup = new JPopupMenu();
-                        JMenuItem item = new JMenuItem("seila");
+                        JMenuItem item = new JMenuItem("Remover Equipamento");
                         item.addMouseListener(new MouseAdapter() {
 
                             @Override
@@ -1326,122 +1269,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         return pane;
     }
 
-    private JPanel getTerminalSelectionPane() {
-        JPanel pane = new JPanel();
-        javax.swing.ButtonGroup buttonGroup1;
-        javax.swing.JLabel jLabel1;
-        javax.swing.JToggleButton leecherButton;
-        javax.swing.JLabel leecherQuestion;
-        javax.swing.JToggleButton seederButton;
-        javax.swing.JLabel seederQuestion;
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
-        leecherButton = new javax.swing.JToggleButton();
-        seederButton = new javax.swing.JToggleButton();
-        seederQuestion = new javax.swing.JLabel();
-        leecherQuestion = new javax.swing.JLabel();
-        JButton okButton = new javax.swing.JButton();
-
-        jLabel1.setText("Como deseja cadastrar este terminal?");
-        jLabel1.setForeground(Color.WHITE);
-
-        seederQuestion.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent evt) {
-                UsefulMethods.makeBalloon(seederQuestion, "<html><h3><em>Seeder:</em></h3><p>  O terminal que ficará responsável por "
-                        + " medir e enviar<br>dados de consumo ao servidor. Não será utilizado pelo<br>usuário comum e necessariamente terá uma unidade<br>Arduino.</p></html>", 5000, Color.yellow);
-            }
-        });
-
-        leecherQuestion.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent evt) {
-                UsefulMethods.makeBalloon(leecherQuestion, "<html><h3><em>Leecher:</em></h3><p>  O terminal que a maioria dos usuários irá utilizar."
-                        + " Não<br>envia medições ao servidor e apenas atua como um<br>intermediário para a função de desligamento remoto.</p></html>", 5000, Color.yellow);
-            }
-        });
-
-        if (terminalSelected == 0) {
-            seederButton.setSelected(true);
-        } else {
-            leecherButton.setSelected(true);
-        }
-
-        buttonGroup1.add(leecherButton);
-        leecherButton.setText("leecher");
-        leecherButton.addActionListener((ActionEvent ae) -> {
-            terminalSelected = 1;
-            System.out.println(terminalSelected);
-        });
-
-        buttonGroup1.add(seederButton);
-        seederButton.setText("seeder");
-        seederButton.addActionListener((ActionEvent ae) -> {
-            terminalSelected = 0;
-            System.out.println(terminalSelected);
-        });
-
-        seederQuestion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/question.png"))); // NOI18N
-
-        leecherQuestion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/question.png"))); // NOI18N
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
-        pane.setLayout(layout);
-
-        okButton.setText("Ok");
-        okButton.addActionListener((ActionEvent ae) -> {
-            terminalFrame.dispose();
-            nextPanel();
-        });
-
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addGap(0, 67, Short.MAX_VALUE)
-                                        .addComponent(seederQuestion)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(seederButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(34, 34, 34)
-                                        .addComponent(leecherButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addGroup(layout.createSequentialGroup()
-                                                        .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addContainerGap())
-                                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                        .addComponent(leecherQuestion)
-                                                        .addGap(71, 71, 71))))))
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel1)
-                        .addGap(53, 53, 53)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addComponent(leecherQuestion)
-                                        .addGap(40, 40, 40))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(leecherButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addComponent(seederQuestion)
-                                                .addGap(40, 40, 40))
-                                        .addComponent(seederButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-                        .addComponent(okButton)
-                        .addContainerGap())
-        );
-
-        return pane;
-    }
-
     private JPanel getConfiguredTerminalPane(String json) throws JSONException {
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
@@ -1454,7 +1281,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
         javax.swing.JLabel arduino = new javax.swing.JLabel();
         JPanel pane = new JPanel();
-        setTitle("Watterizer - Terminal já cadastrado");
 
         JSONObject obj = new JSONObject(json);
 
@@ -1489,7 +1315,13 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         jLabel8.setText("Arduino:");
 
         arduino.setForeground(new java.awt.Color(255, 255, 255));
-        arduino.setText(obj.getString("mac").contains("-") ? "Possui unidade configurada" : "Não configurado");
+        if (json.contains("id_arduino")) {
+            arduino.setText("Possui unidade configurada");
+            xml.setContentByName("terminalType", 0, "0");
+        } else {
+            arduino.setText("Não Configurado");
+            xml.setContentByName("terminalType", 0, "1");
+        }
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(pane);
         pane.setLayout(layout);
@@ -1558,7 +1390,6 @@ public class FirstUseSetupJFrame extends javax.swing.JFrame {
         JPanel pane = new JPanel();
         javax.swing.JLabel text = new javax.swing.JLabel();
         javax.swing.JLabel top = new javax.swing.JLabel();
-        setTitle("Watterizer - Finalizar auxiliar");
 
         Font header = UsefulMethods.getHeaderFont();
         header = header.deriveFont(Font.PLAIN, 40);

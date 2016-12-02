@@ -8,7 +8,6 @@ package com.watterizer;
 import com.watterizer.modals.FirstUseSetupJFrame;
 import com.watterizer.modals.SplashScreen;
 import com.watterizer.panels.GenericErrorJPanel;
-import com.watterizer.panels.LoginJPanel;
 import com.watterizer.util.OpaqueScreen;
 import com.watterizer.util.UsefulMethods;
 import com.watterizer.xml.XmlManager;
@@ -22,10 +21,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -39,7 +37,6 @@ import javax.swing.UIManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import sun.tools.jconsole.LocalVirtualMachine;
 
 /**
  *
@@ -60,6 +57,7 @@ public class Starter {
         decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
         if (decodedPath.contains("watt_exec.jar")) {
             FileOutputStream stream = new FileOutputStream(new File(UsefulMethods.getClassPath(Starter.class) + "log.txt"));
+            //System.setOut(new PrintStream(stream));
             System.setErr(new PrintStream(stream));
         }
 
@@ -102,22 +100,6 @@ public class Starter {
         UIManager.put("TabbedPane.selectHighlight", Color.black);
         UIManager.put("TabbedPane.font", UsefulMethods.getHeaderFont());
         UIManager.put("TabbedPane.tabsOpaque", true);
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    if (UsefulMethods.isShutdownTrue()) {
-                        UsefulMethods.getArduinoInstance().close();
-                        System.err.println("exited");
-                    } else {
-
-                    }
-                } catch (IOException ex) {
-                    Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        });
 
         File getConfig = new File(UsefulMethods.getClassPath(SplashScreen.class) + separator + "config");
         if (!getConfig.exists()) {
@@ -185,11 +167,62 @@ public class Starter {
             UsefulMethods.getWebServiceResponse("http://" + style.getContentByName("webServiceHost", 0) + ":" + style.getContentByName("webServicePort", 0)
                     + "/kilowatt", "POST", s);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Falha com o banco de dados. O aplicativo está sendo encerrado.", "Erro", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
+            OpaqueScreen screen = new OpaqueScreen();
+            GenericErrorJPanel error = new GenericErrorJPanel(screen, "Falha com as configurações", GenericErrorJPanel.ALERT_MESSAGE,
+                    "Falha com as configurações locais: Provavelmente os dados inseridos para a conexão com o WebService não estão"
+                    + " respondendo ou foram alterados recentemente. O aplicativo está sendo reiniciado; insira os novos valores no"
+                    + " auxiliar de configurações iniciais e restaure as configurações passadas. Caso seja um usuário padrão, relate"
+                    + " a um administrador.", GenericErrorJPanel.OK);
+            error.setRightButtonAction((ActionEvent e) -> {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            String optPath = UsefulMethods.getClassPath(Starter.class) + "config" + File.separator + "options.xml";
+                            File opt = new File(optPath);
+                            opt.delete();
+                            String path = Starter.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                            String decodedPath = java.net.URLDecoder.decode(path, "UTF-8");
+                            decodedPath = decodedPath.substring(1).replace("\\", File.separator).replace("/", File.separator);
+                            if (decodedPath.contains("watt_exec.jar")) {
+                                ProcessBuilder pb = new ProcessBuilder("java", "-jar", UsefulMethods.getClassPath(Starter.class) + File.separator + "watt_exec.jar");
+                                pb.directory(new File(UsefulMethods.getClassPath(Starter.class)));
+                                pb.start();
+                            }
+                        } catch (UnsupportedEncodingException ex1) {
+                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex1);
+                        } catch (IOException ex1) {
+                            Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex1);
+                        }
+                    }
+                }.start();
+                error.disposeWindow();
+            });
+
+            screen.setRootFrame(error);
+            screen.setVisible(true);
+            return;
         }
 
-        new Thread("Shutdown Hook") {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    if (UsefulMethods.isShutdownTrue()) {
+                        if (UsefulMethods.getPcModel().getType() == 0) {
+                            UsefulMethods.getArduinoInstance().close();
+                        }
+                        style.setContentByName("lastEnd", 0, "true");
+                        style.saveXml();
+                        System.err.println("exited");
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+
+        new Thread("Shutdown Listener") {
             @Override
             public void run() {
                 while (true) {
@@ -274,6 +307,7 @@ public class Starter {
                         }
                         sleep(1000);
                     } catch (IOException | JSONException | HeadlessException | InterruptedException ex) {
+                        System.err.println("Falha na checagem da url /desligapc no starter");
                         Logger.getLogger(Starter.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }

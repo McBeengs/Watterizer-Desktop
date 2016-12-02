@@ -58,7 +58,8 @@ public class ArduinoBridge {
         }
     }
 
-    private boolean isStreamInvalid = false;
+    private final boolean isStreamInvalid = false;
+
     public boolean openConnection() throws PortInUseException, UnsupportedCommOperationException, IOException, TooManyListenersException {
         if (isDisconnected) {
             if (!checkConnection()) {
@@ -67,7 +68,7 @@ public class ArduinoBridge {
         } else {
             serialPort = (SerialPort) portId.open(this.getClass().getName(),
                     2000);
-            
+
             serialPort.setSerialPortParams(9600,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
@@ -141,7 +142,7 @@ public class ArduinoBridge {
 
         return false;
     }
-    
+
     public void close() {
         serialPort.close();
     }

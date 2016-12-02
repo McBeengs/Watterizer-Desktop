@@ -9,6 +9,7 @@ import com.watterizer.xml.XmlManager;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
@@ -87,16 +88,16 @@ public class SplashScreen extends javax.swing.JFrame {
         infoDisplayer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         infoDisplayer.setOpaque(true);
         getContentPane().add(infoDisplayer);
-        infoDisplayer.setBounds(10, 190, 280, 30);
+        infoDisplayer.setBounds(20, 160, 280, 30);
 
         jProgressBar1.setBorder(new RoundedCornerBorder(25, 25, Color.BLACK));
         jProgressBar1.setOpaque(true);
         getContentPane().add(jProgressBar1);
-        jProgressBar1.setBounds(310, 190, 540, 30);
+        jProgressBar1.setBounds(320, 160, 490, 30);
 
         splashLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/images/splash.png"))); // NOI18N
         getContentPane().add(splashLogo);
-        splashLogo.setBounds(-30, -10, 960, 250);
+        splashLogo.setBounds(0, -50, 960, 310);
 
         pack();
         setLocationRelativeTo(null);
@@ -172,7 +173,10 @@ public class SplashScreen extends javax.swing.JFrame {
                     arduino.setRightButtonAction((ActionEvent e) -> {
                         arduino.disposeWindow();
                         screen.close();
+                        File getOptions = new File(UsefulMethods.getClassPath(UsefulMethods.class) + "config" + File.separator + "options.xml");
+                        getOptions.delete();
                         dispose();
+                        System.exit(0);
                     });
 
                     arduino.setRetryButtonAction((ActionEvent e) -> {
@@ -199,6 +203,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     internet.setRightButtonAction((ActionEvent e) -> {
                         internet.disposeWindow();
                         dispose();
+                        System.exit(0);
                     });
 
                     internet.setRetryButtonAction((ActionEvent e) -> {
@@ -225,6 +230,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     db.setRightButtonAction((ActionEvent e) -> {
                         db.disposeWindow();
                         dispose();
+                        System.exit(0);
                     });
 
                     db.setRetryButtonAction((ActionEvent e) -> {
@@ -263,6 +269,62 @@ public class SplashScreen extends javax.swing.JFrame {
             return false;
         }
 
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.jfree.chart.ChartColor");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"jfreechart-1.0.19\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.apache.commons.codec.CharEncoding");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"commons-codec-1.10\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.apache.commons.io.ByteOrderMark");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"commons-io-2.5\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.jfree.base.log.DefaultLog");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"jcommon-1.0-23\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.apache.commons.net.bsd.RCommandClient");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"commons-net-3.5\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.json.Cookie");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"json-org\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("sun.tools.jconsole.AboutDialog");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"jconsole\"");
+            return false;
+        }
+
+        try {
+            ClassLoader.getSystemClassLoader().loadClass("org.joda.time.DateTime");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Não achou \"joda-time-2.1\"");
+            return false;
+        }
+
         return true;
     }
 
@@ -277,6 +339,7 @@ public class SplashScreen extends javax.swing.JFrame {
                     UsefulMethods.getArduinoInstance();
                 } catch (IOException ex) {
                     errorDetail = language.getContentById("arduinoFailure");
+                    Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
                     throw new Exception("Arduino");
                 }
             }
@@ -286,13 +349,14 @@ public class SplashScreen extends javax.swing.JFrame {
             }
 
             infoDisplayer.setText(language.getContentById("testInternet"));
-//            try {
-//                URL url = new URL("https://www.google.com");
-//                url.openStream();
-//            } catch (Exception ex) {
-//                errorDetail = language.getContentById("internetFailure");
-//                throw new Exception("Internet");
-//            }
+            try {
+                URL url = new URL("https://www.google.com");
+                url.openStream();
+            } catch (Exception ex) {
+                errorDetail = language.getContentById("internetFailure");
+                Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
+                throw new Exception("Internet");
+            }
 
             for (int i = 30; i < 60; i++) {
                 jProgressBar1.setValue(i);
@@ -311,8 +375,8 @@ public class SplashScreen extends javax.swing.JFrame {
                 UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":"
                         + xml.getContentByName("webServicePort", 0) + "/pcligado", "POST", s);
             } catch (Exception ex) {
-                ex.printStackTrace();
                 errorDetail = language.getContentById("dbFailure");
+                Logger.getLogger(SplashScreen.class.getName()).log(Level.SEVERE, null, ex);
                 throw new Exception("DB");
             }
 

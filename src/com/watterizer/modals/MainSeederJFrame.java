@@ -19,7 +19,6 @@ package com.watterizer.modals;
 import com.watterizer.arduino.ArduinoBridge;
 import com.watterizer.panels.GenericErrorJPanel;
 import com.watterizer.panels.MeasurerPanel;
-import com.watterizer.panels.RightClickUser;
 import com.watterizer.panels.options.OptionsJFrame;
 import com.watterizer.style.RoundedCornerBorder;
 import com.watterizer.util.DraggableTabbedPane;
@@ -30,6 +29,7 @@ import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -49,6 +49,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import org.joda.time.DateTime;
@@ -64,15 +65,16 @@ public class MainSeederJFrame extends javax.swing.JFrame {
     private static boolean isErrorShowing = false;
     private XmlManager xml;
     private static JDialog dialog;
-    private static final ArrayList<ConsoleUpdated> consoles = new ArrayList<>();
+    private static final ArrayList<ConsoleUpdated> CONSOLES = new ArrayList<>();
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public MainSeederJFrame() throws IOException {
         initComponents();
+        setTitle("Medidor (" + UsefulMethods.getUserModel().getNome() + ") - Watterizer");
         xml = UsefulMethods.getManagerInstance(UsefulMethods.OPTIONS);
 
         UsefulMethods.getArduinoInstance().addConsoleHandler((ArduinoBridge.ConsoleEvent evt) -> {
-            consoles.stream().forEach((c) -> {
+            CONSOLES.stream().forEach((c) -> {
                 c.onConsoleUpdated(evt);
             });
         });
@@ -139,6 +141,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                                 Logger.getLogger(MainSeederJFrame.class.getName()).log(Level.SEVERE, null, ex);
                             }
 
+                            UsefulMethods.setIsShutdownTrue(true);
                             System.exit(0);
                         }
                     }
@@ -174,9 +177,9 @@ public class MainSeederJFrame extends javax.swing.JFrame {
 
                     if (JOptionPane.showConfirmDialog(null, label, "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         s = "{\n"
-                                + "\"token\":\"" + UsefulMethods.getUserModel().getTokenDesktop() + "\"\n"
+                                + "\"token\":\"" + UsefulMethods.getUserModel().getTokenDesktop() + "\",\n"
+                                + "\"mac\":\"" + UsefulMethods.getPcModel().getMac() + "\"\n"
                                 + "}";
-
                         try {
                             UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/logout", "POST", s);
                         } catch (ProtocolException ex) {
@@ -185,6 +188,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                             Logger.getLogger(MainSeederJFrame.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
+                        UsefulMethods.setIsShutdownTrue(true);
                         System.exit(0);
                     }
                 }
@@ -231,7 +235,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
             });
         }
 
-        System.err.println(UsefulMethods.getUserModel().getTokenDesktop());
+        System.err.println("\nToken Desktop ----> " + UsefulMethods.getUserModel().getTokenDesktop());
         String[] keys = new String[]{"Content-Type", "token"};
         String[] values = new String[]{"application/json; charset=UTF-8", UsefulMethods.getUserModel().getTokenDesktop()};
         String json = "{"
@@ -254,6 +258,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                         error.disposeWindow();
                         screen.close();
                         dispose();
+                        UsefulMethods.setIsShutdownTrue(true);
                         System.exit(0);
                     });
 
@@ -271,6 +276,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                                         + "}";
 
                                 UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/logout", "POST", s);
+                                UsefulMethods.setIsShutdownTrue(true);
                                 System.exit(0);
                             } catch (Exception ex) {
                                 JOptionPane.showMessageDialog(null, "Erro ao tentar novamente", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -295,7 +301,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
         }
 
         try {
-            iconDisplayer.setIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid1.png"))));
+            iconDisplayer.setIcon(new ImageIcon(new ImageIcon(ImageIO.read(UsefulMethods.downloadFile("fotoid" + UsefulMethods.getUserModel().getId() + ".png"))).getImage().getScaledInstance(82, 80, Image.SCALE_DEFAULT)));
         } catch (Exception ex) {
             iconDisplayer.setIcon(null);
         }
@@ -332,6 +338,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
         iconDisplayer.setBackground(new java.awt.Color(255, 255, 255));
         iconDisplayer.setForeground(new java.awt.Color(255, 255, 255));
         iconDisplayer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        iconDisplayer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/watterizer/style/icons/avatar.png"))); // NOI18N
         iconDisplayer.setText(" ");
         iconDisplayer.setBorder(new RoundedCornerBorder(255, 255, new java.awt.Color(255, 200, 20)));
         iconDisplayer.setOpaque(true);
@@ -428,14 +435,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
 
         } else if (evt.getButton() == 3) { //right
             JPopupMenu menu = new JPopupMenu();
-            RightClickUser user = new RightClickUser();
-            user.setTopButtonAction(new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    System.out.println("detalhes usuário");
-                }
-            });
-            user.setBottomButtonAction(new AbstractAction() {
+            JMenuItem logout = new JMenuItem(new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent ae) {
                     if (JOptionPane.showConfirmDialog(null, "Deseja fazer o logout?", "Aviso", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -446,7 +446,7 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                                     + "}";
 
                             UsefulMethods.getWebServiceResponse("http://" + xml.getContentByName("webServiceHost", 0) + ":" + xml.getContentByName("webServicePort", 0) + "/logout", "POST", s);
-
+                            UsefulMethods.setIsShutdownTrue(true);
                             System.exit(0);
 
                         } catch (ProtocolException ex) {
@@ -460,17 +460,18 @@ public class MainSeederJFrame extends javax.swing.JFrame {
                     }
                 }
             });
-            menu.add(user);
-            menu.show(iconDisplayer, evt.getX() - 400, evt.getY());
+            logout.setText("Logout");
+            menu.add(logout);
+            menu.show(iconDisplayer, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_iconDisplayerMouseClicked
 
     public static void addConsoleListener(ConsoleUpdated listener) {
-        consoles.add(listener);
+        CONSOLES.add(listener);
     }
 
     public static void removeAllListeners() {
-        consoles.clear();
+        CONSOLES.clear();
     }
 
     public static void fireMeasurerError(String s) {

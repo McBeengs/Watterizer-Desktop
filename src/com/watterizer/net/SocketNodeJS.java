@@ -41,6 +41,7 @@ public class SocketNodeJS {
      *
      * @param message
      * @return
+     * @throws java.io.IOException
      */
     public String echo(String message) throws IOException {
         // out & in 
@@ -62,7 +63,7 @@ public class SocketNodeJS {
         }
         return null;
     }
-    
+
     public void close() {
         try {
             socket.close();

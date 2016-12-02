@@ -13,12 +13,12 @@ import javax.swing.event.CaretListener;
 
 public class Option1 extends javax.swing.JPanel {
 
-    private String[] languages;
-    private String[] styles;
-    private int languageActive;
-    private int styleSelected;
-    private XmlManager xml;
-    private XmlManager language;
+    private final String[] languages;
+    private final String[] styles;
+    private final int languageActive;
+    private final int styleSelected;
+    private final XmlManager xml;
+    private final XmlManager language;
 
     public Option1(XmlManager xml) {
         this.xml = xml;
@@ -26,7 +26,7 @@ public class Option1 extends javax.swing.JPanel {
 
         File file = new File(UsefulMethods.getClassPath(Option1.class) + File.separator + "language");
         languages = new String[file.listFiles().length];
-        
+
         for (int i = 0; i < languages.length; i++) {
             String s = file.listFiles()[i].getName();
             s = s.substring(0, s.indexOf("."));
@@ -48,13 +48,13 @@ public class Option1 extends javax.swing.JPanel {
 
         styleSelected = Integer.parseInt(xml.getContentByAttribute("style", 0, "attr"));
         styleSelector.setSelectedIndex(styleSelected);
-        
+
         jTextField1.setText(xml.getContentByName("kwh", 0));
         jTextField1.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
                 char c = e.getKeyChar();
-                
+
                 if (!((c >= '0') && (c <= '9')
                         || (c == KeyEvent.VK_BACK_SPACE)
                         || (c == KeyEvent.VK_DELETE)
@@ -62,15 +62,12 @@ public class Option1 extends javax.swing.JPanel {
                     getToolkit().beep();
                     e.consume();
                 }
-               
+
             }
         });
-        
-        jTextField1.addCaretListener(new CaretListener() {
-            @Override
-            public void caretUpdate(CaretEvent ce) {
-                xml.setContentByName("kwh", 0, jTextField1.getText());
-            }
+
+        jTextField1.addCaretListener((CaretEvent ce) -> {
+            xml.setContentByName("kwh", 0, jTextField1.getText());
         });
     }
 
